@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(cd:*)",
+      "Bash(git clone:*)",
+      "Bash(mkdir:*)",
+      "Bash(cd /e/sshserver && dotnet build src/SshServer.Core/SshServer.Core.csproj 2>&1)",
+      "Bash(grep:*)"
+    ]
+  }
+}
