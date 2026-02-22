@@ -65,7 +65,7 @@ Last commit: January 2025
 
 ## Phased Roadmap
 
-### Phase 0 — Proof of Concept (anonymous access + PTY shell)
+### Phase 0 — Gather the parts
 - [ ] Fork or vendor FxSsh source into this repo
 - [ ] Upgrade framework to .net10
 - [ ] Upgrade libraries to .net10 versions
@@ -114,4 +114,5 @@ Last commit: January 2025
 | `Microsoft.Extensions.Logging` | Structured logging |
 | `Spectre.Console` | TUI rendering (Phase 2) |
 | `BouncyCastle.Cryptography` | Fallback crypto if BCL lacks something (e.g. Ed25519 host keys pre-.NET 8) |
+
 
