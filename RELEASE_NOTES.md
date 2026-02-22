@@ -1,5 +1,74 @@
 # Release Notes
 
+## 2026-02-22 (5)
+
+### Added
+- **Command history** with Ctrl-P (previous) and Ctrl-N (next)
+  - Per-connection history storage
+  - Avoids duplicate consecutive commands
+  - Saves current line when navigating, restores when returning to end
+
+---
+
+## 2026-02-22 (4)
+
+### Added
+- **Interactive Spectre.Console prompts**:
+  - `SshAnsiConsoleInput`: Feeds SSH channel input to Spectre's ReadKey
+  - `EscapeSequenceParser`: Parses arrow keys, Home, End, Delete, F-keys from ANSI sequences
+  - `SshAnsiConsoleWrapper`: Injects custom input handler into IAnsiConsole
+- **New interactive commands**:
+  - `menu`: Selection prompt with actions
+  - `select`: Choose from a list of items
+  - `multi`: Multi-selection with space to toggle
+  - `confirm`: Yes/No confirmation
+  - `ask`: Text input with validation
+  - `demo`: Runs all interactive demos
+- **Input mode switching**: Seamlessly switches between line editor and Spectre prompts
+- **Async command execution**: Commands run on background thread to allow input routing
+
+---
+
+## 2026-02-22 (3)
+
+### Added
+- **Spectre.Console integration** for rich terminal output
+  - `SshTextWriter`: Custom TextWriter directing output to SSH channel with CRLF translation
+  - `SshAnsiConsoleOutput`: IAnsiConsoleOutput implementation with terminal dimensions
+  - `SshConsoleFactory`: Creates per-connection IAnsiConsole instances
+  - `CommandHandler`: Processes commands with Spectre-rendered output
+- **Commands**: `help`, `status`, `whoami`, `clear`, `quit`
+- **Rich output**: Tables, panels, rules, and colored markup
+
+### Changed
+- Welcome message now rendered via Spectre.Console Rule widget
+- Terminal resize events update Spectre console dimensions
+
+---
+
+## 2026-02-22 (2)
+
+### Added
+- **Emacs-style line editing** with cursor position tracking:
+  - Ctrl-A: Beginning of line
+  - Ctrl-E: End of line
+  - Ctrl-B: Back one character
+  - Ctrl-F: Forward one character
+  - Ctrl-D: Delete character under cursor (or disconnect if line empty)
+  - Ctrl-K: Kill from cursor to end of line
+  - Ctrl-U: Kill from beginning of line to cursor
+  - Ctrl-L: Clear screen and redraw
+- **Mid-line editing** - Insert and delete anywhere in the line, not just at end
+
+### Changed
+- **Ctrl-C now disconnects** (was Ctrl-D)
+- Backspace/DEL now work correctly with cursor in middle of line
+
+### Fixed
+- Mid-line character insertion now displays correctly (was showing duplicate of character under cursor)
+
+---
+
 ## 2026-02-22
 
 ### Added

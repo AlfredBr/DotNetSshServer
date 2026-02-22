@@ -72,21 +72,22 @@ Last commit: January 2025
 - [ ] Modernize codebase, eliminate warnings in build
 
 ### Phase 1 — Proof of Concept (anonymous access + PTY shell)
-- [ ] Extend auth layer to support `none` auth method
-- [ ] Wire a shell channel to a simple echo TUI (proves the pipe works)
-- [ ] Auto-generate Ed25519 host key on first start
-- [ ] Connect successfully from OpenSSH client (`ssh -o StrictHostKeyChecking=no localhost -p 2222`)
+- [x] Extend auth layer to support `none` auth method
+- [x] Wire a shell channel to a simple echo TUI (proves the pipe works)
+- [x] Auto-generate ECDSA host key on first start (Ed25519 deferred)
+- [x] Connect successfully from OpenSSH client (`ssh -o StrictHostKeyChecking=no localhost -p 2222`)
+- [x] Emacs-style line editing (Ctrl-A/E/B/F/D/K/U/L, backspace)
 
 ### Phase 2 — TUI Integration
-- [ ] Integrate Spectre.Console (or Terminal.Gui) rendering into the shell channel stream
-- [ ] Handle PTY resize events (`SSH_MSG_CHANNEL_REQUEST` with `window-change`)
-- [ ] Support multiple concurrent connections
+- [x] Integrate Spectre.Console rendering into the shell channel stream (hybrid approach)
+- [x] Handle PTY resize events (`SSH_MSG_CHANNEL_REQUEST` with `window-change`)
+- [x] Support multiple concurrent connections
 
 ### Phase 3 — Hardening
 - [ ] Password authentication (simple username/password lookup)
 - [ ] Public key authentication
 - [ ] Rate limiting / connection limits
-- [ ] Logging (Microsoft.Extensions.Logging)
+- [x] Logging (Microsoft.Extensions.Logging) — structured logging with connection IDs
 
 ### Phase 4 — Production Readiness
 - [ ] Configuration via `IOptions<SshServerOptions>`
