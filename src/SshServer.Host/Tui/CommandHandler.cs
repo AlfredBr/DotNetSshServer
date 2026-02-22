@@ -84,6 +84,14 @@ public class CommandHandler
                     ShowLive();
                     break;
 
+                case "tree":
+                    ShowTree();
+                    break;
+
+                case "chart":
+                    ShowBarChart();
+                    break;
+
                 case "quit":
                 case "exit":
                     return false;
@@ -122,6 +130,8 @@ public class CommandHandler
         table.AddRow("[green]progress[/]", "[green]Progress bar demo[/]");
         table.AddRow("[green]spinner[/]", "[green]Status spinner demo[/]");
         table.AddRow("[green]live[/]", "[green]Live updating display[/]");
+        table.AddRow("[cyan]tree[/]", "[cyan]Hierarchical tree display[/]");
+        table.AddRow("[cyan]chart[/]", "[cyan]Bar chart visualization[/]");
         table.AddRow("quit", "Disconnect from server");
         table.AddRow("[dim]Ctrl-C[/]", "[dim]Disconnect (shortcut)[/]");
 
@@ -387,6 +397,62 @@ public class CommandHandler
             });
 
         _console.MarkupLine("\n[dim]Live display finished.[/]");
+    }
+
+    private void ShowTree()
+    {
+        var root = new Tree("[yellow]Project[/]")
+            .Style("dim");
+
+        // Source folder
+        var src = root.AddNode("[blue]src[/]");
+        var host = src.AddNode("[blue]SshServer.Host[/]");
+        host.AddNode("[green]Program.cs[/]");
+        host.AddNode("[green]appsettings.json[/]");
+        var tui = host.AddNode("[blue]Tui[/]");
+        tui.AddNode("[green]CommandHandler.cs[/]");
+        tui.AddNode("[green]SshConsoleFactory.cs[/]");
+        tui.AddNode("[green]SshTextWriter.cs[/]");
+        tui.AddNode("[green]SshAnsiConsoleInput.cs[/]");
+        tui.AddNode("[green]EscapeSequenceParser.cs[/]");
+
+        var core = src.AddNode("[blue]SshServer.Core[/]");
+        var ssh = core.AddNode("[blue]Ssh[/]");
+        ssh.AddNode("[green]Session.cs[/]");
+        ssh.AddNode("[green]Channel.cs[/]");
+
+        // Config files
+        var config = root.AddNode("[magenta]Configuration[/]");
+        config.AddNode("[dim]README.md[/]");
+        config.AddNode("[dim]CLAUDE.md[/]");
+        config.AddNode("[dim]RELEASE_NOTES.md[/]");
+
+        _console.Write(root);
+    }
+
+    private void ShowBarChart()
+    {
+        _console.Write(new BarChart()
+            .Width(60)
+            .Label("[green bold underline]Language Popularity[/]")
+            .CenterLabel()
+            .AddItem("C#", 85, Color.Green)
+            .AddItem("Python", 92, Color.Yellow)
+            .AddItem("JavaScript", 78, Color.Blue)
+            .AddItem("Rust", 45, Color.Red)
+            .AddItem("Go", 67, Color.Aqua)
+            .AddItem("F#", 28, Color.Magenta1));
+
+        _console.WriteLine();
+
+        _console.Write(new BarChart()
+            .Width(60)
+            .Label("[blue bold underline]Server Metrics[/]")
+            .CenterLabel()
+            .AddItem("CPU", 45, Color.Green)
+            .AddItem("Memory", 72, Color.Yellow)
+            .AddItem("Disk I/O", 30, Color.Blue)
+            .AddItem("Network", 58, Color.Aqua));
     }
 
     /// <summary>

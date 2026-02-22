@@ -178,13 +178,17 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
     var inPromptMode = false;
 
     // Escape sequence parsing state
-    var escapeState = 0; // 0=normal, 1=got ESC, 2=got ESC[
+    // 0=normal, 1=got ESC, 2=got ESC[, 3=got ESC[3 (for Delete key)
+    var escapeState = 0;
+
+    // Kill ring for Ctrl-K, Ctrl-U, Ctrl-Y
+    var killRing = "";
 
     // Available commands for tab completion
     string[] commands = [
         "help", "status", "whoami", "clear", "menu", "select",
         "multi", "confirm", "ask", "demo", "progress", "spinner",
-        "live", "quit", "exit"
+        "live", "tree", "chart", "quit", "exit"
     ];
 
     // Create Spectre console for this connection
@@ -343,6 +347,101 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
         }
     }
 
+    // Helper: move cursor to beginning of line (Ctrl-A / Home)
+    void MoveToBeginning()
+    {
+        CursorLeft(cursorPos);
+        cursorPos = 0;
+    }
+
+    // Helper: move cursor to end of line (Ctrl-E / End)
+    void MoveToEnd()
+    {
+        CursorRight(lineBuffer.Length - cursorPos);
+        cursorPos = lineBuffer.Length;
+    }
+
+    // Helper: delete char under cursor (Ctrl-D / Delete key)
+    void DeleteCharUnderCursor()
+    {
+        if (cursorPos < lineBuffer.Length)
+        {
+            lineBuffer.Remove(cursorPos, 1);
+            RedrawFromCursor();
+        }
+    }
+
+    // Helper: move cursor back one word (Alt-B)
+    void MoveBackWord()
+    {
+        if (cursorPos == 0) return;
+
+        // Skip any spaces before the word
+        while (cursorPos > 0 && char.IsWhiteSpace(lineBuffer[cursorPos - 1]))
+        {
+            cursorPos--;
+        }
+        // Move to the start of the word
+        while (cursorPos > 0 && !char.IsWhiteSpace(lineBuffer[cursorPos - 1]))
+        {
+            cursorPos--;
+        }
+        RedrawLine();
+    }
+
+    // Helper: move cursor forward one word (Alt-F)
+    void MoveForwardWord()
+    {
+        if (cursorPos >= lineBuffer.Length) return;
+
+        // Skip current word
+        while (cursorPos < lineBuffer.Length && !char.IsWhiteSpace(lineBuffer[cursorPos]))
+        {
+            cursorPos++;
+        }
+        // Skip spaces after the word
+        while (cursorPos < lineBuffer.Length && char.IsWhiteSpace(lineBuffer[cursorPos]))
+        {
+            cursorPos++;
+        }
+        RedrawLine();
+    }
+
+    // Helper: delete word forward (Alt-D)
+    void DeleteWordForward()
+    {
+        if (cursorPos >= lineBuffer.Length) return;
+
+        var startPos = cursorPos;
+        // Skip current word
+        while (cursorPos < lineBuffer.Length && !char.IsWhiteSpace(lineBuffer[cursorPos]))
+        {
+            cursorPos++;
+        }
+        // Skip spaces after the word
+        while (cursorPos < lineBuffer.Length && char.IsWhiteSpace(lineBuffer[cursorPos]))
+        {
+            cursorPos++;
+        }
+
+        // Delete from startPos to cursorPos
+        var deleted = lineBuffer.ToString(startPos, cursorPos - startPos);
+        killRing = deleted;
+        lineBuffer.Remove(startPos, cursorPos - startPos);
+        cursorPos = startPos;
+        RedrawFromCursor();
+    }
+
+    // Helper: yank (paste) from kill ring (Ctrl-Y)
+    void Yank()
+    {
+        if (string.IsNullOrEmpty(killRing)) return;
+
+        lineBuffer.Insert(cursorPos, killRing);
+        cursorPos += killRing.Length;
+        RedrawLine();
+    }
+
     // Welcome message via Spectre
     commandHandler.ShowWelcome();
     channel.SendData("> "u8.ToArray());
@@ -360,7 +459,7 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
         {
             logger.LogTrace("[{ConnId}] Char: {Char}", connId, FormatByte(b));
 
-            // Handle escape sequences (arrow keys)
+            // Handle escape sequences (arrow keys, Home, End, Delete, Alt+key)
             if (escapeState == 1)
             {
                 if (b == '[')
@@ -368,27 +467,82 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
                     escapeState = 2;
                     continue;
                 }
-                // Not a CSI sequence, reset and process byte normally
+                // Alt+key sequences (ESC followed by letter)
                 escapeState = 0;
+                switch (b)
+                {
+                    case (byte)'b': // Alt-B - back word
+                    case (byte)'B':
+                        MoveBackWord();
+                        continue;
+                    case (byte)'f': // Alt-F - forward word
+                    case (byte)'F':
+                        MoveForwardWord();
+                        continue;
+                    case (byte)'d': // Alt-D - delete word forward
+                    case (byte)'D':
+                        DeleteWordForward();
+                        continue;
+                }
+                // Not a recognized sequence, process byte normally
             }
             else if (escapeState == 2)
             {
-                escapeState = 0;
                 switch (b)
                 {
                     case (byte)'A': // Up arrow - previous history
                         HistoryPrevious();
-                        break;
+                        escapeState = 0;
+                        continue;
                     case (byte)'B': // Down arrow - next history
                         HistoryNext();
-                        break;
+                        escapeState = 0;
+                        continue;
                     case (byte)'C': // Right arrow - forward char
                         MoveForward();
-                        break;
+                        escapeState = 0;
+                        continue;
                     case (byte)'D': // Left arrow - back char
                         MoveBack();
-                        break;
+                        escapeState = 0;
+                        continue;
+                    case (byte)'H': // Home key
+                        MoveToBeginning();
+                        escapeState = 0;
+                        continue;
+                    case (byte)'F': // End key
+                        MoveToEnd();
+                        escapeState = 0;
+                        continue;
+                    case (byte)'1': // Could be Home (\x1b[1~)
+                    case (byte)'3': // Delete key (\x1b[3~)
+                    case (byte)'4': // Could be End (\x1b[4~)
+                        escapeState = 100 + (b - '0'); // Store the number
+                        continue;
+                    default:
+                        escapeState = 0;
+                        continue;
                 }
+            }
+            else if (escapeState >= 101 && escapeState <= 104)
+            {
+                // Expecting ~ to complete the sequence
+                if (b == '~')
+                {
+                    switch (escapeState)
+                    {
+                        case 101: // \x1b[1~ - Home
+                            MoveToBeginning();
+                            break;
+                        case 103: // \x1b[3~ - Delete
+                            DeleteCharUnderCursor();
+                            break;
+                        case 104: // \x1b[4~ - End
+                            MoveToEnd();
+                            break;
+                    }
+                }
+                escapeState = 0;
                 continue;
             }
 
@@ -408,21 +562,15 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
                         Disconnect();
                         return;
                     }
-                    if (cursorPos < lineBuffer.Length)
-                    {
-                        lineBuffer.Remove(cursorPos, 1);
-                        RedrawFromCursor();
-                    }
+                    DeleteCharUnderCursor();
                     break;
 
                 case 0x01: // Ctrl-A - beginning of line
-                    CursorLeft(cursorPos);
-                    cursorPos = 0;
+                    MoveToBeginning();
                     break;
 
                 case 0x05: // Ctrl-E - end of line
-                    CursorRight(lineBuffer.Length - cursorPos);
-                    cursorPos = lineBuffer.Length;
+                    MoveToEnd();
                     break;
 
                 case 0x02: // Ctrl-B - back one char
@@ -444,6 +592,7 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
                 case 0x0B: // Ctrl-K - kill to end of line
                     if (cursorPos < lineBuffer.Length)
                     {
+                        killRing = lineBuffer.ToString(cursorPos, lineBuffer.Length - cursorPos);
                         lineBuffer.Length = cursorPos;
                         channel.SendData("\x1b[K"u8.ToArray());
                     }
@@ -452,10 +601,15 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
                 case 0x15: // Ctrl-U - kill to beginning of line
                     if (cursorPos > 0)
                     {
+                        killRing = lineBuffer.ToString(0, cursorPos);
                         lineBuffer.Remove(0, cursorPos);
                         cursorPos = 0;
                         RedrawLine();
                     }
+                    break;
+
+                case 0x19: // Ctrl-Y - yank (paste from kill ring)
+                    Yank();
                     break;
 
                 case 0x0C: // Ctrl-L - clear screen, redraw

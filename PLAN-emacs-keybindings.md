@@ -84,25 +84,25 @@ void RedrawFromCursor()
 - Multiple matches: shows options
 - Only completes first word (command name, not arguments)
 
+## Implemented Features (Previously Deferred)
+
+### Kill Ring ✓
+- Ctrl-K and Ctrl-U save deleted text to kill ring
+- Ctrl-Y yanks (pastes) the last killed text
+- Uses a simple `string killRing` variable
+
+### Word Movements ✓
+- Alt-B (back word): moves cursor to start of previous word
+- Alt-F (forward word): moves cursor to start of next word
+- Alt-D (delete word forward): deletes word and saves to kill ring
+- Implemented via escape sequence parsing (ESC + letter)
+
+### Home/End/Delete Keys ✓
+- Home key (\x1b[H or \x1b[1~): move to beginning of line
+- End key (\x1b[F or \x1b[4~): move to end of line
+- Delete key (\x1b[3~): delete character under cursor
+
 ## Deferred Features
-
-These are out of scope for the initial implementation:
-
-### Kill Ring
-- Ctrl-K and Ctrl-U would save deleted text
-- Ctrl-Y would yank (paste) the last killed text
-- Could use a simple `string? killRing` variable
-
-### Command History
-- Ctrl-P: previous command
-- Ctrl-N: next command
-- Requires `List<string> history` and `int historyIndex`
-
-### Word Movements
-- Alt-B (back word): arrives as `\x1b b` (escape then 'b')
-- Alt-F (forward word): arrives as `\x1b f`
-- Alt-D (delete word forward): arrives as `\x1b d`
-- Requires escape sequence parsing with timeout or state machine
 
 ### UTF-8 Support
 - Cursor position != byte position for multi-byte chars

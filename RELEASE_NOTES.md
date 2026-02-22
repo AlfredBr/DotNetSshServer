@@ -1,5 +1,22 @@
 # Release Notes
 
+## 2026-02-22 (9)
+
+### Added
+- **New Spectre.Console commands**:
+  - `tree`: Hierarchical tree display (project structure demo)
+  - `chart`: Bar chart visualization (language popularity, server metrics)
+- **Enhanced line editing**:
+  - Home/End keys: move to beginning/end of line
+  - Delete key: delete character under cursor
+  - Alt-B: move back one word
+  - Alt-F: move forward one word
+  - Alt-D: delete word forward
+  - Ctrl-Y: yank (paste) from kill ring
+- **Kill ring**: Ctrl-K and Ctrl-U now save deleted text for Ctrl-Y to paste
+
+---
+
 ## 2026-02-22 (8)
 
 ### Added
