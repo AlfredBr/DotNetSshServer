@@ -1,7 +1,9 @@
 using System.Net;
 using System.Text;
+
 using FxSsh;
 using FxSsh.Services;
+
 using SshServer;
 
 const int Port = 2222;
@@ -45,7 +47,9 @@ void OnCommandOpened(object? sender, CommandRequestedArgs e)
     Console.WriteLine($"    Shell type: {e.ShellType}");
 
     if (e.ShellType != "shell")
+    {
         return;  // only handle interactive shells for now
+    }
 
     e.Agreed = true;
 
@@ -60,7 +64,9 @@ void OnCommandOpened(object? sender, CommandRequestedArgs e)
 
         // When the user presses Enter, resend the prompt.
         if (data.Contains((byte)'\r') || data.Contains((byte)'\n'))
-            channel.SendData("> "u8.ToArray());
+        { 
+            channel.SendData("> "u8.ToArray()); 
+        }
     };
 
     channel.CloseReceived += (_, _) =>
