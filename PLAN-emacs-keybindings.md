@@ -78,6 +78,12 @@ void RedrawFromCursor()
 - Duplicate consecutive commands not added
 - Current line saved when navigating, restored with Ctrl-N
 
+### Tab Completion ✓
+- Tab: complete command name
+- Single match: auto-completes
+- Multiple matches: shows options
+- Only completes first word (command name, not arguments)
+
 ## Deferred Features
 
 These are out of scope for the initial implementation:

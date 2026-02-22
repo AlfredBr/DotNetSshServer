@@ -1,5 +1,16 @@
 # Release Notes
 
+## 2026-02-22 (7)
+
+### Added
+- **Tab completion** for command names
+  - Single match: auto-completes the command
+  - Multiple matches: displays all matching commands
+  - No match: does nothing
+  - Only completes first word (command name)
+
+---
+
 ## 2026-02-22 (6)
 
 ### Added

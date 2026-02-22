@@ -177,6 +177,13 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
     // Input mode: false = line editing, true = Spectre prompt
     var inPromptMode = false;
 
+    // Available commands for tab completion
+    string[] commands = [
+        "help", "status", "whoami", "clear", "menu", "select",
+        "multi", "confirm", "ask", "demo", "progress", "spinner",
+        "live", "quit", "exit"
+    ];
+
     // Create Spectre console for this connection
     var ctx = SshConsoleFactory.Create(channel, termWidth, termHeight);
     var console = ctx.Console;
@@ -234,6 +241,41 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
         // Display new content
         if (text.Length > 0)
             channel.SendData(Encoding.UTF8.GetBytes(text));
+    }
+
+    // Helper: handle tab completion
+    void HandleTabCompletion()
+    {
+        var input = lineBuffer.ToString().TrimStart();
+
+        // Only complete first word (command name)
+        if (input.Contains(' '))
+            return;
+
+        // Find matching commands
+        var matches = commands
+            .Where(c => c.StartsWith(input, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        if (matches.Length == 0)
+        {
+            // No matches - do nothing
+            return;
+        }
+        else if (matches.Length == 1)
+        {
+            // Single match - complete it
+            ReplaceLine(matches[0]);
+        }
+        else
+        {
+            // Multiple matches - show them
+            channel.SendData("\r\n"u8.ToArray());
+            var matchList = string.Join("  ", matches);
+            channel.SendData(Encoding.UTF8.GetBytes(matchList));
+            channel.SendData("\r\n> "u8.ToArray());
+            channel.SendData(Encoding.UTF8.GetBytes(lineBuffer.ToString()));
+        }
     }
 
     void Disconnect()
@@ -363,6 +405,10 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
                         channel.SendData(Encoding.UTF8.GetBytes(lineBuffer.ToString()));
                         CursorLeft(lineBuffer.Length - cursorPos);
                     }
+                    break;
+
+                case 0x09: // Tab - command completion
+                    HandleTabCompletion();
                     break;
 
                 case 0x08: // Ctrl-H (Backspace)
