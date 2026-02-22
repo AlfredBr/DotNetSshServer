@@ -2,7 +2,7 @@
 
 ## Project Context
 
-This project builds a .NET 8 SSH server whose primary purpose is to serve a TUI application
+This project builds a .NET 10 SSH server whose ultimate purpose is to serve a TUI application
 over SSH. The end goal is something similar to how Charmbracelet's Wish library works in Go,
 but in C#.
 
@@ -69,7 +69,6 @@ BouncyCastle — evaluate later.
 - Prioritise readability over cleverness — this codebase is exploratory.
 - Add XML doc comments to public API surface; inline comments for non-obvious protocol logic.
 - Use `Microsoft.Extensions.Logging` from the start so logging is not bolted on later.
-- No code yet — this file documents research and planning only.
 
 ## Useful Links
 
@@ -80,3 +79,6 @@ BouncyCastle — evaluate later.
 
 ## Build tips
 - dotnet clean; dotnet build /p:Platform="Any CPU"
+- Always update RELEASENOTES.md after every significant change
+- Always update README.md as we add dependencies, the strategy or architecture changes significantly or new features are added.
+
