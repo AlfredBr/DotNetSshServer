@@ -7,7 +7,7 @@
 .env
 
 # private keys
-.pem
+*.pem
 
 # User-specific files
 *.rsuser
