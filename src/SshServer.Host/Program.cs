@@ -11,8 +11,6 @@ using SshServer;
 using SshServer.Host;
 using SshServer.Host.Tui;
 
-const int MaxDataLogLength = 128;
-
 // ── configuration ──────────────────────────────────────────────────────────────
 
 var configuration = new ConfigurationBuilder()
@@ -118,37 +116,6 @@ string FormatByte(byte b) => b switch
     _ => $"\\x{b:X2}"
 };
 
-string FormatData(byte[] data)
-{
-    var sb = new StringBuilder();
-    var limit = Math.Min(data.Length, MaxDataLogLength);
-
-    for (int i = 0; i < limit; i++)
-    {
-        var b = data[i];
-        sb.Append(b switch
-        {
-            0x00 => "\\0",
-            0x04 => "\\x04",
-            0x07 => "\\a",
-            0x08 => "\\b",
-            0x09 => "\\t",
-            0x0A => "\\n",
-            0x0D => "\\r",
-            0x1B => "\\e",
-            0x7F => "\\x7F",
-            _ when b < 0x20 => $"\\x{b:X2}",
-            _ when b < 0x7F => (char)b,
-            _ => $"\\x{b:X2}"
-        });
-    }
-
-    if (data.Length > MaxDataLogLength)
-        sb.Append($"[...+{data.Length - MaxDataLogLength} bytes]");
-
-    return sb.ToString();
-}
-
 // ── event handlers ─────────────────────────────────────────────────────────────
 
 void OnConnectionAccepted(object? sender, Session session)
@@ -201,7 +168,6 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
     var channel = e.Channel;
     var lineBuffer = new StringBuilder();
     var cursorPos = 0;
-    var shouldDisconnect = false;
 
     // Command history
     var history = new List<string>();
@@ -276,7 +242,6 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
         channel.SendData("\r\nGoodbye!\r\n"u8.ToArray());
         channel.SendEof();
         channel.SendClose(0);
-        shouldDisconnect = true;
     }
 
     // Welcome message via Spectre
