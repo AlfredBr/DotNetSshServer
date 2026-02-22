@@ -65,7 +65,7 @@ void OnCommandOpened(object? sender, CommandRequestedArgs e)
         // When the user presses Enter, resend the prompt.
         if (data.Contains((byte)'\r') || data.Contains((byte)'\n'))
         { 
-            channel.SendData("> "u8.ToArray()); 
+            channel.SendData("\n> "u8.ToArray());
         }
     };
 
