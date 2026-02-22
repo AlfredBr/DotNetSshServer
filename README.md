@@ -3,7 +3,7 @@
 ## Goal
 
 Build a lightweight SSH server library in C# (.NET 10) that allows terminal clients to connect
-via SSH and interact with a TUI application. The initial proof-of-concept uses anonymous
+via SSH and interact with a TUI application. This whole thing was inspired by charmbracelet's [wish](https://github.com/charmbracelet/wish) package in Go and the various TUI applications I have been enjoying recently.  The initial proof-of-concept uses anonymous
 authentication; additional auth methods and features will be layered in over time.
 
 ## Intended Architecture
@@ -114,5 +114,6 @@ Last commit: January 2025
 | `Microsoft.Extensions.Logging` | Structured logging |
 | `Spectre.Console` | TUI rendering (Phase 2) |
 | `BouncyCastle.Cryptography` | Fallback crypto if BCL lacks something (e.g. Ed25519 host keys pre-.NET 8) |
+
 
 
