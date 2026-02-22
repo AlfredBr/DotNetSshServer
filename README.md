@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a lightweight SSH server library in C# (.NET 8) that allows terminal clients to connect
+Build a lightweight SSH server library in C# (.NET 10) that allows terminal clients to connect
 via SSH and interact with a TUI application. The initial proof-of-concept uses anonymous
 authentication; additional auth methods and features will be layered in over time.
 
@@ -65,8 +65,13 @@ Last commit: January 2025
 
 ## Phased Roadmap
 
-### Phase 1 — Proof of Concept (anonymous access + PTY shell)
+### Phase 0 — Proof of Concept (anonymous access + PTY shell)
 - [ ] Fork or vendor FxSsh source into this repo
+- [ ] Upgrade framework to .net10
+- [ ] Upgrade libraries to .net10 versions
+- [ ] Modernize codebase, eliminate warnings in build
+
+### Phase 1 — Proof of Concept (anonymous access + PTY shell)
 - [ ] Extend auth layer to support `none` auth method
 - [ ] Wire a shell channel to a simple echo TUI (proves the pipe works)
 - [ ] Auto-generate Ed25519 host key on first start
@@ -109,3 +114,4 @@ Last commit: January 2025
 | `Microsoft.Extensions.Logging` | Structured logging |
 | `Spectre.Console` | TUI rendering (Phase 2) |
 | `BouncyCastle.Cryptography` | Fallback crypto if BCL lacks something (e.g. Ed25519 host keys pre-.NET 8) |
+
