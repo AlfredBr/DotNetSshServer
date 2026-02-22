@@ -10,11 +10,11 @@ namespace FxSsh.Messages
         {
             Contract.Requires(name != null);
 
-            Name = name;
+            Name = name!;
             Number = number;
         }
 
-        public string Name { get; private set; }
+        public string Name { get; private set; } = null!;
         public byte Number { get; private set; }
     }
 }

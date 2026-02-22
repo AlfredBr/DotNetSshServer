@@ -48,7 +48,7 @@ namespace FxSsh
             Contract.Requires(str != null);
             Contract.Requires(encoding != null);
 
-            var bytes = encoding.GetBytes(str);
+            var bytes = encoding!.GetBytes(str!);
             WriteBinary(bytes);
             return this;
         }

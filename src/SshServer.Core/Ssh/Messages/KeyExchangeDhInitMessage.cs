@@ -4,7 +4,7 @@ namespace FxSsh.Messages
 {
     public class KeyExchangeDhInitMessage : KeyExchangeXInitMessage
     {
-        public byte[] E { get; private set; }
+        public byte[] E { get; private set; } = null!;
 
         protected override void OnLoad(SshDataReader reader)
         {

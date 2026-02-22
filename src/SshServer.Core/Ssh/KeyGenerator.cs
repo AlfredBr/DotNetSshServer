@@ -31,7 +31,7 @@ namespace FxSsh
             Contract.Requires(oldBase64Key != null);
 
             var rsa = new RSACryptoServiceProvider();
-            var bytes = Convert.FromBase64String(oldBase64Key);
+            var bytes = Convert.FromBase64String(oldBase64Key!);
             rsa.ImportCspBlob(bytes);
             var pem = rsa.ExportPkcs8PrivateKeyPem();
             return pem;

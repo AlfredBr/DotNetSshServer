@@ -4,7 +4,7 @@ namespace FxSsh.Messages.Connection
 {
     public class CommandRequestMessage : ChannelRequestMessage
     {
-        public string Command { get; private set; }
+        public string Command { get; private set; } = null!;
 
         protected override void OnLoad(SshDataReader reader)
         {

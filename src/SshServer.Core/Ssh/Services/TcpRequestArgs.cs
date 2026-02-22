@@ -10,19 +10,19 @@ namespace FxSsh.Services
             Contract.Requires(host != null);
             Contract.Requires(originatorIP != null);
 
-            Channel = channel;
-            Host = host;
+            Channel = channel!;
+            Host = host!;
             Port = port;
-            OriginatorIP = originatorIP;
+            OriginatorIP = originatorIP!;
             OriginatorPort = originatorPort;
-            AttachedUserAuthArgs = userAuthArgs;
+            AttachedUserAuthArgs = userAuthArgs!;
         }
 
-        public SessionChannel Channel { get; private set; }
-        public string Host { get; private set; }
+        public SessionChannel Channel { get; private set; } = null!;
+        public string Host { get; private set; } = null!;
         public int Port { get; private set; }
-        public string OriginatorIP { get; private set; }
+        public string OriginatorIP { get; private set; } = null!;
         public int OriginatorPort { get; private set; }
-        public UserAuthArgs AttachedUserAuthArgs { get; private set; }
+        public UserAuthArgs AttachedUserAuthArgs { get; private set; } = null!;
     }
 }

@@ -18,13 +18,13 @@ namespace FxSsh.Messages
             Contract.Requires(language != null);
 
             ReasonCode = reasonCode;
-            Description = description;
+            Description = description!;
             Language = language;
         }
 
         public DisconnectReason ReasonCode { get; private set; }
-        public string Description { get; private set; }
-        public string Language { get; private set; }
+        public string Description { get; private set; } = null!;
+        public string? Language { get; private set; }
 
         public override byte MessageType { get { return MessageNumber; } }
 

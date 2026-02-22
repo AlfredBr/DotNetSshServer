@@ -77,3 +77,6 @@ BouncyCastle — evaluate later.
 - RFC 4252 (auth, includes `none` method): https://datatracker.ietf.org/doc/html/rfc4252
 - RFC 4254 (channels, PTY): https://datatracker.ietf.org/doc/html/rfc4254
 - Spectre.Console custom console: https://spectreconsole.net/best-practices
+
+## Build tips
+- dotnet clean; dotnet build /p:Platform="Any CPU"

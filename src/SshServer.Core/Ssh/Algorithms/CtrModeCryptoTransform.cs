@@ -15,7 +15,7 @@ namespace FxSsh.Algorithms
         {
             Contract.Requires(algorithm != null);
 
-            algorithm.Mode = CipherMode.ECB;
+            algorithm!.Mode = CipherMode.ECB;
             algorithm.Padding = PaddingMode.None;
 
             _algorithm = algorithm;

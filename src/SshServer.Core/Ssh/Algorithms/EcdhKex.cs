@@ -7,7 +7,7 @@ namespace FxSsh.Algorithms
 {
     public class EcdhKex : KexAlgorithm
     {
-        private readonly ECDiffieHellman _ecdh;
+        private readonly ECDiffieHellman _ecdh = null!;
 
         public EcdhKex(string curveName)
         {
@@ -32,11 +32,11 @@ namespace FxSsh.Algorithms
 
         public override byte[] CreateKeyExchange()
         {
-            var q = _ecdh.PublicKey.ExportParameters().Q;
-            return new SshDataWriter(1 + q.X.Length + q.Y.Length)
+            var q = _ecdh!.PublicKey.ExportParameters().Q;
+            return new SshDataWriter(1 + q.X!.Length + q.Y!.Length)
                 .Write(0x04)
-                .WriteBytes(q.X)
-                .WriteBytes(q.Y)
+                .WriteBytes(q.X!)
+                .WriteBytes(q.Y!)
                 .ToByteArray();
         }
 
@@ -47,13 +47,13 @@ namespace FxSsh.Algorithms
             var reader = new SshDataReader(exchangeData);
             if (reader.ReadByte() != 0x04)
                 throw new InvalidDataException();
-            var qlength = (exchangeData.Length - 1) / 2;
+            var qlength = (exchangeData!.Length - 1) / 2;
             var args = new ECParameters();
             args.Curve = _ecdh.PublicKey.ExportParameters().Curve;
             args.Q = new ECPoint { X = reader.ReadBytes(qlength), Y = reader.ReadBytes(qlength) };
 
             var clientPublicKey = ECDiffieHellman.Create(args).PublicKey;
-            var agreement = _ecdh.DeriveRawSecretAgreement(clientPublicKey);
+            var agreement = _ecdh!.DeriveRawSecretAgreement(clientPublicKey);
             var sharedSecret = new BigInteger(agreement, isUnsigned: true, isBigEndian: true)
                 .ToByteArray(isUnsigned: false, isBigEndian: true);
 

@@ -4,13 +4,13 @@ namespace FxSsh.Services
 {
     public abstract class SshService
     {
-        protected internal readonly Session _session;
+        protected internal readonly Session _session = null!;
 
         public SshService(Session session)
         {
             Contract.Requires(session != null);
 
-            _session = session;
+            _session = session!;
         }
 
         internal protected abstract void CloseService();

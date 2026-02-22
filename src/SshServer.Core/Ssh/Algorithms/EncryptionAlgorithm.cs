@@ -15,11 +15,11 @@ namespace FxSsh.Algorithms
             Contract.Requires(algorithm != null);
             Contract.Requires(key != null);
             Contract.Requires(iv != null);
-            Contract.Requires(keySize == key.Length << 3);
+            Contract.Requires(keySize == key!.Length << 3);
 
-            algorithm.KeySize = keySize;
+            algorithm!.KeySize = keySize;
             algorithm.Key = key;
-            algorithm.IV = iv;
+            algorithm.IV = iv!;
             algorithm.Padding = PaddingMode.None;
 
             _algorithm = algorithm;

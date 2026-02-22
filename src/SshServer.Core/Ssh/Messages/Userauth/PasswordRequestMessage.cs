@@ -5,7 +5,7 @@ namespace FxSsh.Messages.UserAuth
 {
     public class PasswordRequestMessage : RequestMessage
     {
-        public string Password { get; private set; }
+        public string Password { get; private set; } = null!;
 
         protected override void OnLoad(SshDataReader reader)
         {

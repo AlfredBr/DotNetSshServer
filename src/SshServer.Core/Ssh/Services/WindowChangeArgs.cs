@@ -8,14 +8,14 @@ namespace FxSsh.Services
         {
             Contract.Requires(channel != null);
 
-            Channel = channel;
+            Channel = channel!;
             WidthColumns = widthColumns;
             HeightRows = heightRows;
             WidthPixels = widthPixels;
             HeightPixels = heightPixels;
         }
 
-        public SessionChannel Channel { get; private set; }
+        public SessionChannel Channel { get; private set; } = null!;
         public uint WidthColumns { get; private set; }
         public uint HeightRows { get; private set; }
         public uint WidthPixels { get; private set; }

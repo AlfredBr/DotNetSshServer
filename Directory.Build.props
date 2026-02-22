@@ -1,0 +1,8 @@
+<Project>
+  <!-- Override the Platform env var (set by VS developer shells) so MSBuild
+       resolves the solution configuration as "Debug|Any CPU" rather than
+       the invalid "Debug|x64". -->
+  <PropertyGroup Condition="'$(Platform)' == 'x64'">
+    <Platform>Any CPU</Platform>
+  </PropertyGroup>
+</Project>

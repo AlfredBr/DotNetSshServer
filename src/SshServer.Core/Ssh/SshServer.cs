@@ -15,7 +15,7 @@ namespace FxSsh
         private readonly Dictionary<string, string> _hostKey = [];
         private bool _isDisposed;
         private bool _started;
-        private TcpListener _listenser = null;
+        private TcpListener? _listenser = null;
 
         public SshServer()
             : this(new StartingInfo())
@@ -25,13 +25,13 @@ namespace FxSsh
         {
             Contract.Requires(info != null);
 
-            StartingInfo = info;
+            StartingInfo = info!;
         }
 
-        public StartingInfo StartingInfo { get; private set; }
+        public StartingInfo StartingInfo { get; private set; } = null!;
 
-        public event EventHandler<Session> ConnectionAccepted;
-        public event EventHandler<Exception> ExceptionRaised;
+        public event EventHandler<Session>? ConnectionAccepted;
+        public event EventHandler<Exception>? ExceptionRaised;
 
         public void Start()
         {
@@ -61,7 +61,7 @@ namespace FxSsh
                 if (!_started)
                     throw new InvalidOperationException("The server is not started.");
 
-                _listenser.Stop();
+                _listenser!.Stop();
 
                 _isDisposed = true;
                 _started = false;
@@ -84,15 +84,15 @@ namespace FxSsh
             Contract.Requires(type != null);
             Contract.Requires(xml != null);
 
-            if (!_hostKey.ContainsKey(type))
-                _hostKey.Add(type, xml);
+            if (!_hostKey.ContainsKey(type!))
+                _hostKey.Add(type!, xml!);
         }
 
         private void BeginAcceptSocket()
         {
             try
             {
-                _listenser.BeginAcceptSocket(AcceptSocket, null);
+                _listenser!.BeginAcceptSocket(AcceptSocket, null);
             }
             catch (ObjectDisposedException)
             {
@@ -109,7 +109,7 @@ namespace FxSsh
         {
             try
             {
-                var socket = _listenser.EndAcceptSocket(ar);
+                var socket = _listenser!.EndAcceptSocket(ar);
                 Task.Run(() =>
                 {
                     var session = new Session(socket, _hostKey, StartingInfo.ServerBanner);

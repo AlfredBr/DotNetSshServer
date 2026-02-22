@@ -14,7 +14,7 @@ namespace FxSsh.Services
     {
         private readonly object _locker = new();
         private readonly List<Channel> _channels = [];
-        private readonly UserAuthArgs _auth = null;
+        private readonly UserAuthArgs _auth = null!;
         private readonly BlockingCollection<ConnectionServiceMessage> _messageQueue = [];
         private readonly CancellationTokenSource _messageCts = new();
 
@@ -25,16 +25,16 @@ namespace FxSsh.Services
         {
             Contract.Requires(auth != null);
 
-            _auth = auth;
+            _auth = auth!;
 
             Task.Run(MessageLoop);
         }
 
-        public event EventHandler<CommandRequestedArgs> CommandOpened;
-        public event EventHandler<EnvironmentArgs> EnvReceived;
-        public event EventHandler<PtyArgs> PtyReceived;
-        public event EventHandler<TcpRequestArgs> TcpForwardRequest;
-        public event EventHandler<WindowChangeArgs> WindowChange;
+        public event EventHandler<CommandRequestedArgs>? CommandOpened;
+        public event EventHandler<EnvironmentArgs>? EnvReceived;
+        public event EventHandler<PtyArgs>? PtyReceived;
+        public event EventHandler<TcpRequestArgs>? TcpForwardRequest;
+        public event EventHandler<WindowChangeArgs>? WindowChange;
 
         protected internal override void CloseService()
         {
@@ -56,7 +56,7 @@ namespace FxSsh.Services
             if (message is ChannelWindowAdjustMessage)
                 this.HandleMessage((dynamic)message);
             else
-                _messageQueue.Add(message);
+                _messageQueue.Add(message!);
         }
 
         private void MessageLoop()
@@ -321,7 +321,7 @@ namespace FxSsh.Services
                     throw new SshConnectionException(string.Format("Invalid client channel id {0}.", id),
                         DisconnectReason.ProtocolError);
 
-                return channel;
+                return channel!;
             }
         }
 
@@ -334,7 +334,7 @@ namespace FxSsh.Services
                     throw new SshConnectionException(string.Format("Invalid server channel id {0}.", id),
                         DisconnectReason.ProtocolError);
 
-                return channel;
+                return channel!;
             }
         }
 

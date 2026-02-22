@@ -8,7 +8,7 @@ namespace FxSsh.Messages.Connection
         private const byte MessageNumber = 98;
 
         public uint RecipientChannel { get; set; }
-        public string RequestType { get; set; }
+        public string RequestType { get; set; } = null!;
         public bool WantReply { get; set; }
 
         public override byte MessageType { get { return MessageNumber; } }

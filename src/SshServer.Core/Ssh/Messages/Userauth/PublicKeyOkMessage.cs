@@ -7,8 +7,8 @@ namespace FxSsh.Messages.UserAuth
     {
         private const byte MessageNumber = 60;
 
-        public string KeyAlgorithmName { get; set; }
-        public byte[] PublicKey { get; set; }
+        public string KeyAlgorithmName { get; set; } = null!;
+        public byte[] PublicKey { get; set; } = null!;
 
         public override byte MessageType { get { return MessageNumber; } }
 

@@ -16,25 +16,25 @@ namespace FxSsh.Messages
 
         public byte[] Cookie { get; private set; }
 
-        public string[] KeyExchangeAlgorithms { get; set; }
+        public string[] KeyExchangeAlgorithms { get; set; } = null!;
 
-        public string[] ServerHostKeyAlgorithms { get; set; }
+        public string[] ServerHostKeyAlgorithms { get; set; } = null!;
 
-        public string[] EncryptionAlgorithmsClientToServer { get; set; }
+        public string[] EncryptionAlgorithmsClientToServer { get; set; } = null!;
 
-        public string[] EncryptionAlgorithmsServerToClient { get; set; }
+        public string[] EncryptionAlgorithmsServerToClient { get; set; } = null!;
 
-        public string[] MacAlgorithmsClientToServer { get; set; }
+        public string[] MacAlgorithmsClientToServer { get; set; } = null!;
 
-        public string[] MacAlgorithmsServerToClient { get; set; }
+        public string[] MacAlgorithmsServerToClient { get; set; } = null!;
 
-        public string[] CompressionAlgorithmsClientToServer { get; set; }
+        public string[] CompressionAlgorithmsClientToServer { get; set; } = null!;
 
-        public string[] CompressionAlgorithmsServerToClient { get; set; }
+        public string[] CompressionAlgorithmsServerToClient { get; set; } = null!;
 
-        public string[] LanguagesClientToServer { get; set; }
+        public string[] LanguagesClientToServer { get; set; } = null!;
 
-        public string[] LanguagesServerToClient { get; set; }
+        public string[] LanguagesServerToClient { get; set; } = null!;
 
         public bool FirstKexPacketFollows { get; set; }
 

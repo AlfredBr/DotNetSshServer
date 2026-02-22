@@ -8,7 +8,7 @@ namespace FxSsh.Algorithms
     [ContractClass(typeof(PublicKeyAlgorithmContract))]
     public abstract class PublicKeyAlgorithm
     {
-        public PublicKeyAlgorithm(string key)
+        public PublicKeyAlgorithm(string? key)
         {
             if (!string.IsNullOrEmpty(key))
                 ImportKey(key);
@@ -39,7 +39,7 @@ namespace FxSsh.Algorithms
 
             return new SshDataWriter()
                 .Write(this.Name, Encoding.ASCII)
-                .WriteBinary(SignData(data))
+                .WriteBinary(SignData(data!))
                 .ToByteArray();
         }
 

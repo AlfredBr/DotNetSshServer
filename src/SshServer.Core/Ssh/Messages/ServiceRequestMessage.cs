@@ -7,7 +7,7 @@ namespace FxSsh.Messages
     {
         private const byte MessageNumber = 5;
 
-        public string ServiceName { get; private set; }
+        public string ServiceName { get; private set; } = null!;
 
         public override byte MessageType { get { return MessageNumber; } }
 

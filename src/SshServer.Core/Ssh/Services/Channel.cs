@@ -7,7 +7,7 @@ namespace FxSsh.Services
 {
     public abstract class Channel
     {
-        protected ConnectionService _connectionService;
+        protected ConnectionService _connectionService = null!;
         protected EventWaitHandle _sendingWindowWaitHandle = new ManualResetEvent(false);
 
         public Channel(ConnectionService connectionService,
@@ -16,7 +16,7 @@ namespace FxSsh.Services
         {
             Contract.Requires(connectionService != null);
 
-            _connectionService = connectionService;
+            _connectionService = connectionService!;
 
             ClientChannelId = clientChannelId;
             ClientInitialWindowSize = clientInitialWindowSize;
@@ -44,15 +44,15 @@ namespace FxSsh.Services
         public bool ServerClosed { get; private set; }
         public bool ServerMarkedEof { get; private set; }
 
-        public event EventHandler<byte[]> DataReceived;
-        public event EventHandler EofReceived;
-        public event EventHandler CloseReceived;
+        public event EventHandler<byte[]>? DataReceived;
+        public event EventHandler? EofReceived;
+        public event EventHandler? CloseReceived;
 
         public void SendData(byte[] data)
         {
             Contract.Requires(data != null);
 
-            if (data.Length == 0)
+            if (data!.Length == 0)
             {
                 return;
             }
@@ -62,7 +62,7 @@ namespace FxSsh.Services
 
             var total = (uint)data.Length;
             var offset = 0L;
-            byte[] buf = null;
+            byte[]? buf = null;
             do
             {
                 var packetSize = Math.Min(Math.Min(ClientWindowSize, ClientMaxPacketSize), total);
@@ -112,7 +112,7 @@ namespace FxSsh.Services
         {
             Contract.Requires(data != null);
 
-            ServerAttemptAdjustWindow((uint)data.Length);
+            ServerAttemptAdjustWindow((uint)data!.Length);
 
             DataReceived?.Invoke(this, data);
         }

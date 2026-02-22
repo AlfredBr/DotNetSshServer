@@ -6,7 +6,7 @@ namespace FxSsh.Algorithms
     [ContractClass(typeof(KexAlgorithmContract))]
     public abstract class KexAlgorithm
     {
-        protected HashAlgorithm _hashAlgorithm;
+        protected HashAlgorithm _hashAlgorithm = null!;
 
         public abstract byte[] CreateKeyExchange();
 
@@ -16,7 +16,7 @@ namespace FxSsh.Algorithms
         {
             Contract.Requires(input != null);
 
-            return _hashAlgorithm.ComputeHash(input);
+            return _hashAlgorithm.ComputeHash(input!);
         }
     }
 }

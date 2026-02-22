@@ -7,7 +7,7 @@ namespace FxSsh.Messages.Connection
     {
         private const byte MessageNumber = 90;
 
-        public string ChannelType { get; private set; }
+        public string ChannelType { get; private set; } = null!;
         public uint SenderChannel { get; private set; }
         public uint InitialWindowSize { get; private set; }
         public uint MaximumPacketSize { get; private set; }

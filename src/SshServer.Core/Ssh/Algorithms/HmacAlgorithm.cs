@@ -5,16 +5,16 @@ namespace FxSsh.Algorithms
 {
     public class HmacAlgorithm
     {
-        private readonly KeyedHashAlgorithm _algorithm;
+        private readonly KeyedHashAlgorithm _algorithm = null!;
 
         public HmacAlgorithm(KeyedHashAlgorithm algorithm, int keySize, byte[] key)
         {
             Contract.Requires(algorithm != null);
             Contract.Requires(key != null);
-            Contract.Requires(keySize == key.Length << 3);
+            Contract.Requires(keySize == key!.Length << 3);
 
-            _algorithm = algorithm;
-            algorithm.Key = key;
+            _algorithm = algorithm!;
+            algorithm!.Key = key;
         }
 
         public int DigestLength
@@ -26,7 +26,7 @@ namespace FxSsh.Algorithms
         {
             Contract.Requires(input != null);
 
-            return _algorithm.ComputeHash(input);
+            return _algorithm.ComputeHash(input!);
         }
     }
 }

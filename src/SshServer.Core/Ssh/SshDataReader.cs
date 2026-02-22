@@ -73,7 +73,7 @@ namespace FxSsh
             Contract.Requires(encoding != null);
 
             var span = ReadBinaryAsMemory().Span;
-            return encoding.GetString(span);
+            return encoding!.GetString(span);
         }
 
         public byte[] ReadMpint()

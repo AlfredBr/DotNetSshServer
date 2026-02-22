@@ -11,7 +11,7 @@ namespace FxSsh.Algorithms
             Contract.Requires(algorithm != null);
 
             KeySize = keySize;
-            Hmac = key => new HmacAlgorithm(algorithm, keySize, key);
+            Hmac = key => new HmacAlgorithm(algorithm!, keySize, key);
         }
 
         public int KeySize { get; private set; }

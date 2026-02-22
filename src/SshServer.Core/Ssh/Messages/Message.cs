@@ -36,7 +36,7 @@ namespace FxSsh.Messages
             Contract.Requires(message != null);
 
             var msg = new T();
-            msg.Load(message.RawBytes);
+            msg.Load(message!.RawBytes);
             return msg;
         }
 

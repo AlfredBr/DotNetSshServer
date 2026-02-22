@@ -7,9 +7,9 @@ namespace FxSsh.Messages.UserAuth
     {
         protected const byte MessageNumber = 50;
 
-        public string Username { get; protected set; }
-        public string ServiceName { get; protected set; }
-        public string MethodName { get; protected set; }
+        public string Username { get; protected set; } = null!;
+        public string ServiceName { get; protected set; } = null!;
+        public string MethodName { get; protected set; } = null!;
 
         public override byte MessageType { get { return MessageNumber; } }
 

@@ -11,24 +11,24 @@ namespace FxSsh.Services
             Contract.Requires(modes != null);
             Contract.Requires(userAuthArgs != null);
 
-            Channel = channel;
-            Terminal = terminal;
+            Channel = channel!;
+            Terminal = terminal!;
             HeightPx = heightPx;
             HeightRows = heightRows;
             WidthPx = widthPx;
             WidthChars = widthChars;
-            Modes = modes;
+            Modes = modes!;
 
-            AttachedUserAuthArgs = userAuthArgs;
+            AttachedUserAuthArgs = userAuthArgs!;
         }
 
-        public SessionChannel Channel { get; private set; }
-        public string Terminal { get; private set; }
+        public SessionChannel Channel { get; private set; } = null!;
+        public string Terminal { get; private set; } = null!;
         public uint HeightPx { get; private set; }
         public uint HeightRows { get; private set; }
         public uint WidthPx { get; private set; }
         public uint WidthChars { get; private set; }
-        public string Modes { get; private set; }
-        public UserAuthArgs AttachedUserAuthArgs { get; private set; }
+        public string Modes { get; private set; } = null!;
+        public UserAuthArgs AttachedUserAuthArgs { get; private set; } = null!;
     }
 }

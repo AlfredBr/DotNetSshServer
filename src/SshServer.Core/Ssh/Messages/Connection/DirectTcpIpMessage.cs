@@ -5,9 +5,9 @@ namespace FxSsh.Messages.Connection
 {
     public class DirectTcpIpMessage : ChannelOpenMessage
     {
-        public string Host { get; private set; }
+        public string Host { get; private set; } = null!;
         public uint Port { get; private set; }
-        public string OriginatorIPAddress { get; private set; }
+        public string OriginatorIPAddress { get; private set; } = null!;
         public uint OriginatorPort { get; private set; }
 
         protected override void OnLoad(SshDataReader reader)

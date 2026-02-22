@@ -11,15 +11,15 @@ namespace FxSsh.Services
             Contract.Requires(value != null);
             Contract.Requires(userAuthArgs != null);
 
-            Channel = channel;
-            Name = name;
-            Value = value;
-            AttachedUserAuthArgs = userAuthArgs;
+            Channel = channel!;
+            Name = name!;
+            Value = value!;
+            AttachedUserAuthArgs = userAuthArgs!;
         }
 
-        public SessionChannel Channel { get; private set; }
-        public string Name { get; private set; }
-        public string Value { get; private set; }
-        public UserAuthArgs AttachedUserAuthArgs { get; private set; }
+        public SessionChannel Channel { get; private set; } = null!;
+        public string Name { get; private set; } = null!;
+        public string Value { get; private set; } = null!;
+        public UserAuthArgs AttachedUserAuthArgs { get; private set; } = null!;
     }
 }

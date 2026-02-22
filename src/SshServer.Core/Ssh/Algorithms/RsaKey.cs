@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,10 +9,10 @@ namespace FxSsh.Algorithms
     public class RsaKey : PublicKeyAlgorithm
     {
         private readonly RSA _algorithm = RSA.Create();
-        private readonly string _name;
+        private readonly string _name = null!;
         private readonly HashAlgorithmName _sha;
 
-        public RsaKey(int sha2Bitlen, string key)
+        public RsaKey(int sha2Bitlen, string? key)
             : base(key)
         {
             Contract.Requires(sha2Bitlen == 256 || sha2Bitlen == 512);
@@ -69,10 +70,11 @@ namespace FxSsh.Algorithms
         public override byte[] CreateKeyAndCertificatesData()
         {
             var args = _algorithm.ExportParameters(false);
-            return new SshDataWriter(8 + PublicKeyName.Length + args.Exponent.Length + args.Modulus.Length)
+            Debug.Assert(args.Exponent != null && args.Modulus != null, "RSA public key parameters must not be null.");
+            return new SshDataWriter(8 + PublicKeyName.Length + args.Exponent!.Length + args.Modulus!.Length)
                 .Write(PublicKeyName, Encoding.ASCII)
-                .WriteMpint(args.Exponent)
-                .WriteMpint(args.Modulus)
+                .WriteMpint(args.Exponent!)
+                .WriteMpint(args.Modulus!)
                 .ToByteArray();
         }
 

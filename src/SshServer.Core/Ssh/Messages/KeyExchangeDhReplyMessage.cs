@@ -2,9 +2,9 @@
 {
     public class KeyExchangeDhReplyMessage : KeyExchangeXReplyMessage
     {
-        public byte[] HostKey { get; set; }
-        public byte[] F { get; set; }
-        public byte[] Signature { get; set; }
+        public byte[] HostKey { get; set; } = null!;
+        public byte[] F { get; set; } = null!;
+        public byte[] Signature { get; set; } = null!;
 
         protected override void OnGetPacket(SshDataWriter writer)
         {

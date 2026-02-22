@@ -11,7 +11,7 @@ namespace FxSsh.Algorithms
         private readonly HashAlgorithmName _sha;
         private readonly string _curveName;
 
-        public EcdsaKey(string curveName, string key)
+        public EcdsaKey(string curveName, string? key)
             : base(key)
         {
             Contract.Requires(curveName == "nistp256" || curveName == "nistp384" || curveName == "nistp521");
@@ -72,10 +72,10 @@ namespace FxSsh.Algorithms
         public override byte[] CreateKeyAndCertificatesData()
         {
             var args = _algorithm.ExportParameters(false);
-            var bytesQ = new SshDataWriter(1 + args.Q.X.Length + args.Q.Y.Length)
+            var bytesQ = new SshDataWriter(1 + args.Q.X!.Length + args.Q.Y!.Length)
                 .Write(0x04)
-                .WriteBytes(args.Q.X)
-                .WriteBytes(args.Q.Y)
+                .WriteBytes(args.Q.X!)
+                .WriteBytes(args.Q.Y!)
                 .ToByteArray();
             return new SshDataWriter(12 + this.Name.Length + _curveName.Length + bytesQ.Length)
                 .Write(this.Name, Encoding.ASCII)

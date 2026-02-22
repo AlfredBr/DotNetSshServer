@@ -6,8 +6,8 @@ namespace FxSsh.Messages.UserAuth
     public class PublicKeyRequestMessage : RequestMessage
     {
         public bool HasSignature { get; private set; }
-        public string KeyAlgorithmName { get; private set; }
-        public byte[] PublicKey { get; private set; }
+        public string KeyAlgorithmName { get; private set; } = null!;
+        public byte[] PublicKey { get; private set; } = null!;
         public ReadOnlyMemory<byte> Signature { get; private set; }
 
         public ReadOnlyMemory<byte> PayloadWithoutSignature { get; private set; }
