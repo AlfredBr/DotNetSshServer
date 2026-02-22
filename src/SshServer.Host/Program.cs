@@ -177,6 +177,9 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
     // Input mode: false = line editing, true = Spectre prompt
     var inPromptMode = false;
 
+    // Escape sequence parsing state
+    var escapeState = 0; // 0=normal, 1=got ESC, 2=got ESC[
+
     // Available commands for tab completion
     string[] commands = [
         "help", "status", "whoami", "clear", "menu", "select",
@@ -286,6 +289,60 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
         channel.SendClose(0);
     }
 
+    // Helper: move cursor back one char (Ctrl-B / Left arrow)
+    void MoveBack()
+    {
+        if (cursorPos > 0)
+        {
+            cursorPos--;
+            CursorLeft(1);
+        }
+    }
+
+    // Helper: move cursor forward one char (Ctrl-F / Right arrow)
+    void MoveForward()
+    {
+        if (cursorPos < lineBuffer.Length)
+        {
+            cursorPos++;
+            CursorRight(1);
+        }
+    }
+
+    // Helper: previous command in history (Ctrl-P / Up arrow)
+    void HistoryPrevious()
+    {
+        if (history.Count > 0)
+        {
+            if (historyIndex == history.Count)
+            {
+                savedLine = lineBuffer.ToString();
+            }
+            if (historyIndex > 0)
+            {
+                historyIndex--;
+                ReplaceLine(history[historyIndex]);
+            }
+        }
+    }
+
+    // Helper: next command in history (Ctrl-N / Down arrow)
+    void HistoryNext()
+    {
+        if (historyIndex < history.Count)
+        {
+            historyIndex++;
+            if (historyIndex == history.Count)
+            {
+                ReplaceLine(savedLine);
+            }
+            else
+            {
+                ReplaceLine(history[historyIndex]);
+            }
+        }
+    }
+
     // Welcome message via Spectre
     commandHandler.ShowWelcome();
     channel.SendData("> "u8.ToArray());
@@ -303,8 +360,44 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
         {
             logger.LogTrace("[{ConnId}] Char: {Char}", connId, FormatByte(b));
 
+            // Handle escape sequences (arrow keys)
+            if (escapeState == 1)
+            {
+                if (b == '[')
+                {
+                    escapeState = 2;
+                    continue;
+                }
+                // Not a CSI sequence, reset and process byte normally
+                escapeState = 0;
+            }
+            else if (escapeState == 2)
+            {
+                escapeState = 0;
+                switch (b)
+                {
+                    case (byte)'A': // Up arrow - previous history
+                        HistoryPrevious();
+                        break;
+                    case (byte)'B': // Down arrow - next history
+                        HistoryNext();
+                        break;
+                    case (byte)'C': // Right arrow - forward char
+                        MoveForward();
+                        break;
+                    case (byte)'D': // Left arrow - back char
+                        MoveBack();
+                        break;
+                }
+                continue;
+            }
+
             switch (b)
             {
+                case 0x1B: // Escape - start of escape sequence
+                    escapeState = 1;
+                    break;
+
                 case 0x03: // Ctrl-C - disconnect
                     Disconnect();
                     return;
@@ -333,51 +426,19 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
                     break;
 
                 case 0x02: // Ctrl-B - back one char
-                    if (cursorPos > 0)
-                    {
-                        cursorPos--;
-                        CursorLeft(1);
-                    }
+                    MoveBack();
                     break;
 
                 case 0x06: // Ctrl-F - forward one char
-                    if (cursorPos < lineBuffer.Length)
-                    {
-                        cursorPos++;
-                        CursorRight(1);
-                    }
+                    MoveForward();
                     break;
 
                 case 0x10: // Ctrl-P - previous command in history
-                    if (history.Count > 0)
-                    {
-                        if (historyIndex == history.Count)
-                        {
-                            // Save current line before navigating
-                            savedLine = lineBuffer.ToString();
-                        }
-                        if (historyIndex > 0)
-                        {
-                            historyIndex--;
-                            ReplaceLine(history[historyIndex]);
-                        }
-                    }
+                    HistoryPrevious();
                     break;
 
                 case 0x0E: // Ctrl-N - next command in history
-                    if (historyIndex < history.Count)
-                    {
-                        historyIndex++;
-                        if (historyIndex == history.Count)
-                        {
-                            // Restore saved line
-                            ReplaceLine(savedLine);
-                        }
-                        else
-                        {
-                            ReplaceLine(history[historyIndex]);
-                        }
-                    }
+                    HistoryNext();
                     break;
 
                 case 0x0B: // Ctrl-K - kill to end of line

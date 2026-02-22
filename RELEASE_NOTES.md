@@ -1,5 +1,15 @@
 # Release Notes
 
+## 2026-02-22 (8)
+
+### Added
+- **Arrow key support** in line editor
+  - Up/Down arrows: navigate command history (same as Ctrl-P/Ctrl-N)
+  - Left/Right arrows: move cursor (same as Ctrl-B/Ctrl-F)
+  - Implemented via ANSI escape sequence parsing
+
+---
+
 ## 2026-02-22 (7)
 
 ### Added
