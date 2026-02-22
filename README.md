@@ -90,8 +90,8 @@ Last commit: January 2025
 - [x] Logging (Microsoft.Extensions.Logging) — structured logging with connection IDs
 
 ### Phase 4 — Production Readiness
-- [ ] Configuration via `IOptions<SshServerOptions>`
-- [ ] Graceful shutdown (`CancellationToken` propagation)
+- [x] Configuration via `appsettings.json` with environment variables and CLI args
+- [x] Graceful shutdown (`CancellationToken` propagation, Ctrl+C handling)
 - [ ] Unit tests for transport and auth layers
 - [ ] NuGet package (optional)
 

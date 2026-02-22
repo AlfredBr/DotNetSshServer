@@ -299,10 +299,10 @@ src/SshServer.Host/
 - [x] Input mode switching (line editor ↔ Spectre prompt)
 - [x] Async command execution for non-blocking prompts
 
-### Milestone 4: Live Displays (Future)
-- [ ] Support `Progress` for long-running operations
-- [ ] Support `Status` spinner
-- [ ] Support `Live` for real-time updates
+### Milestone 4: Live Displays ✓ COMPLETE
+- [x] Support `Progress` for long-running operations (multi-task with spinners)
+- [x] Support `Status` spinner (with changing messages and spinner styles)
+- [x] Support `Live` for real-time updates (live-updating metrics table)
 
 ## Example Session
 

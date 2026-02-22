@@ -4,37 +4,92 @@ using System.Text;
 using FxSsh;
 using FxSsh.Services;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using SshServer;
+using SshServer.Host;
 using SshServer.Host.Tui;
 
-const int Port = 2222;
-const string Banner = "SSH-2.0-SshServer";
 const int MaxDataLogLength = 128;
+
+// ── configuration ──────────────────────────────────────────────────────────────
+
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+    .AddEnvironmentVariables("SSHSERVER_")
+    .AddCommandLine(args)
+    .Build();
+
+var options = new SshServerOptions();
+configuration.GetSection(SshServerOptions.SectionName).Bind(options);
+
+// Parse log level from config
+var logLevel = Enum.TryParse<LogLevel>(options.LogLevel, ignoreCase: true, out var level)
+    ? level
+    : LogLevel.Debug;
+
+// ── logging ────────────────────────────────────────────────────────────────────
 
 using var loggerFactory = LoggerFactory.Create(builder =>
 {
-    builder.AddSimpleConsole(options =>
+    builder.AddSimpleConsole(opts =>
     {
-        options.SingleLine = true;
-        options.TimestampFormat = "HH:mm:ss.fff ";
+        opts.SingleLine = true;
+        opts.TimestampFormat = "HH:mm:ss.fff ";
     });
-    builder.SetMinimumLevel(LogLevel.Trace);
+    builder.SetMinimumLevel(logLevel);
 });
 
 var logger = loggerFactory.CreateLogger("SshServer");
 
-var server = new global::FxSsh.SshServer(new StartingInfo(IPAddress.IPv6Any, Port, Banner));
+// ── graceful shutdown ──────────────────────────────────────────────────────────
 
-HostKeyStore.EnsureAndRegister(server);
+using var cts = new CancellationTokenSource();
+
+Console.CancelKeyPress += (_, e) =>
+{
+    logger.LogInformation("Shutdown requested (Ctrl+C)");
+    e.Cancel = true; // Prevent immediate termination
+    cts.Cancel();
+};
+
+AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+{
+    if (!cts.IsCancellationRequested)
+    {
+        logger.LogInformation("Process exit requested");
+        cts.Cancel();
+    }
+};
+
+// ── server startup ─────────────────────────────────────────────────────────────
+
+var server = new global::FxSsh.SshServer(new StartingInfo(IPAddress.IPv6Any, options.Port, options.Banner));
+
+HostKeyStore.EnsureAndRegister(server, options.HostKeyPath);
 
 server.ConnectionAccepted += OnConnectionAccepted;
 server.ExceptionRaised += (_, ex) => logger.LogError(ex, "Server exception");
 
 server.Start();
-logger.LogInformation("SSH server listening on port {Port}", Port);
-await Task.Delay(Timeout.Infinite);
+logger.LogInformation("SSH server listening on port {Port}. Press Ctrl+C to stop.", options.Port);
+
+try
+{
+    await Task.Delay(Timeout.Infinite, cts.Token);
+}
+catch (OperationCanceledException)
+{
+    // Expected on shutdown
+}
+
+// ── graceful shutdown sequence ─────────────────────────────────────────────────
+
+logger.LogInformation("Stopping server...");
+server.Stop();
+logger.LogInformation("Server stopped");
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 

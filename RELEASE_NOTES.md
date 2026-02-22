@@ -1,5 +1,27 @@
 # Release Notes
 
+## 2026-02-22 (6)
+
+### Added
+- **Configuration system** via `appsettings.json`:
+  - `Port`: Server listening port (default: 2222)
+  - `Banner`: SSH protocol banner
+  - `HostKeyPath`: Path to host key file
+  - `MaxConnections`: Connection limit (default: 100)
+  - `LogLevel`: Minimum log level (default: Debug)
+  - Environment variables supported with `SSHSERVER_` prefix
+  - Command-line arguments supported
+- **Graceful shutdown**:
+  - Ctrl+C on server cleanly disconnects all sessions
+  - Proper handling of SIGTERM/ProcessExit
+  - Server.Stop() called with cleanup logging
+- **Live display commands**:
+  - `progress`: Multi-task progress bars with spinners
+  - `spinner`: Status spinner with changing messages
+  - `live`: Live-updating metrics table
+
+---
+
 ## 2026-02-22 (5)
 
 ### Added

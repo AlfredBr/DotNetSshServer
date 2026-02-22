@@ -72,6 +72,18 @@ public class CommandHandler
                     ShowDemo();
                     break;
 
+                case "progress":
+                    ShowProgress();
+                    break;
+
+                case "spinner":
+                    ShowSpinner();
+                    break;
+
+                case "live":
+                    ShowLive();
+                    break;
+
                 case "quit":
                 case "exit":
                     return false;
@@ -107,11 +119,14 @@ public class CommandHandler
         table.AddRow("[yellow]confirm[/]", "[yellow]Yes/No confirmation[/]");
         table.AddRow("[yellow]ask[/]", "[yellow]Text input prompt[/]");
         table.AddRow("[yellow]demo[/]", "[yellow]Run all interactive demos[/]");
+        table.AddRow("[green]progress[/]", "[green]Progress bar demo[/]");
+        table.AddRow("[green]spinner[/]", "[green]Status spinner demo[/]");
+        table.AddRow("[green]live[/]", "[green]Live updating display[/]");
         table.AddRow("quit", "Disconnect from server");
         table.AddRow("[dim]Ctrl-C[/]", "[dim]Disconnect (shortcut)[/]");
 
         _console.Write(table);
-        _console.MarkupLine("\n[dim]Yellow commands are interactive - use arrow keys to navigate.[/]");
+        _console.MarkupLine("\n[dim]Yellow = interactive prompts, Green = live displays[/]");
     }
 
     private void ShowStatus()
@@ -260,6 +275,118 @@ public class CommandHandler
         table.AddRow("Applied", proceed ? "[green]Yes[/]" : "[red]No[/]");
 
         _console.Write(table);
+    }
+
+    private void ShowProgress()
+    {
+        _console.Progress()
+            .AutoClear(false)
+            .Columns(
+            [
+                new TaskDescriptionColumn(),
+                new ProgressBarColumn(),
+                new PercentageColumn(),
+                new RemainingTimeColumn(),
+                new SpinnerColumn(),
+            ])
+            .Start(ctx =>
+            {
+                var task1 = ctx.AddTask("[green]Downloading files[/]");
+                var task2 = ctx.AddTask("[blue]Processing data[/]");
+                var task3 = ctx.AddTask("[yellow]Uploading results[/]");
+
+                while (!ctx.IsFinished)
+                {
+                    task1.Increment(3.5);
+                    if (task1.Value > 30)
+                        task2.Increment(2.5);
+                    if (task2.Value > 50)
+                        task3.Increment(4.0);
+
+                    Thread.Sleep(50);
+                }
+            });
+
+        _console.MarkupLine("\n[green]All tasks completed![/]");
+    }
+
+    private void ShowSpinner()
+    {
+        _console.Status()
+            .AutoRefresh(true)
+            .Spinner(Spinner.Known.Dots)
+            .Start("[yellow]Processing...[/]", ctx =>
+            {
+                // Simulate work with different status messages
+                Thread.Sleep(1000);
+
+                ctx.Status("[yellow]Loading configuration...[/]");
+                ctx.Spinner(Spinner.Known.Star);
+                Thread.Sleep(1000);
+
+                ctx.Status("[yellow]Connecting to database...[/]");
+                ctx.Spinner(Spinner.Known.Aesthetic);
+                Thread.Sleep(1000);
+
+                ctx.Status("[yellow]Fetching data...[/]");
+                ctx.Spinner(Spinner.Known.Arrow);
+                Thread.Sleep(1000);
+
+                ctx.Status("[green]Finalizing...[/]");
+                ctx.Spinner(Spinner.Known.Bounce);
+                Thread.Sleep(500);
+            });
+
+        _console.MarkupLine("[green]Done![/]");
+    }
+
+    private void ShowLive()
+    {
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("Metric")
+            .AddColumn("Value")
+            .AddColumn("Status");
+
+        _console.Live(table)
+            .AutoClear(false)
+            .Overflow(VerticalOverflow.Ellipsis)
+            .Start(ctx =>
+            {
+                var random = new Random();
+
+                for (int i = 0; i < 10; i++)
+                {
+                    table.Rows.Clear();
+
+                    var cpu = random.Next(10, 90);
+                    var memory = random.Next(30, 80);
+                    var connections = random.Next(1, 50);
+                    var requests = random.Next(100, 1000);
+
+                    table.AddRow(
+                        "CPU Usage",
+                        $"{cpu}%",
+                        cpu > 70 ? "[red]High[/]" : cpu > 40 ? "[yellow]Normal[/]" : "[green]Low[/]");
+                    table.AddRow(
+                        "Memory",
+                        $"{memory}%",
+                        memory > 70 ? "[red]High[/]" : memory > 40 ? "[yellow]Normal[/]" : "[green]Low[/]");
+                    table.AddRow(
+                        "Connections",
+                        connections.ToString(),
+                        connections > 30 ? "[yellow]Busy[/]" : "[green]OK[/]");
+                    table.AddRow(
+                        "Requests/sec",
+                        requests.ToString(),
+                        "[blue]Active[/]");
+
+                    ctx.Refresh();
+                    Thread.Sleep(500);
+                }
+            });
+
+        _console.MarkupLine("\n[dim]Live display finished.[/]");
     }
 
     /// <summary>
