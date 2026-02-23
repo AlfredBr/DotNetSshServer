@@ -11,6 +11,7 @@
   - Now displays server hostname, process ID, and IP addresses
 - **Enhanced `status` command**:
   - Now displays server process ID
+- **Updated README.md** with comprehensive documentation
 
 ---
 

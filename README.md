@@ -1,120 +1,157 @@
-# .NET SSH Server — Project Plan
+# .NET SSH Server
 
-## Goal
+A lightweight SSH server library in C# (.NET 10) that allows terminal clients to connect
+via SSH and interact with a TUI application. Inspired by charmbracelet's [wish](https://github.com/charmbracelet/wish) package in Go.
 
-Build a lightweight SSH server library in C# (.NET 10) that allows terminal clients to connect
-via SSH and interact with a TUI application. This whole thing was inspired by charmbracelet's [wish](https://github.com/charmbracelet/wish) package in Go and the various TUI applications I have been enjoying recently.  The initial proof-of-concept uses anonymous
-authentication; additional auth methods and features will be layered in over time.
+## Features
 
-## Intended Architecture
+### Authentication
+- **Public key authentication** — supports ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256/384/521
+- **Anonymous access** — configurable via `AllowAnonymous` setting
+- **Authorized keys** — standard OpenSSH `authorized_keys` file format
+
+### Host Keys
+- **ECDSA** — auto-generated nistp256 key on first run
+- **Ed25519** — client key verification (via NSec.Cryptography)
+- **RSA** — sha2-256/512 support
+
+### Terminal Emulation
+- **PTY support** — full pseudo-terminal with resize handling
+- **Emacs-style line editing**:
+  - Ctrl-A/E: beginning/end of line
+  - Ctrl-B/F: back/forward character
+  - Ctrl-P/N: previous/next history
+  - Ctrl-D: delete char or disconnect
+  - Ctrl-K/U: kill to end/beginning
+  - Ctrl-Y: yank (paste) from kill ring
+  - Ctrl-L: clear screen
+  - Alt-B/F: back/forward word
+  - Alt-D: delete word forward
+  - Home/End, Delete, Arrow keys
+- **Tab completion** — command name auto-completion
+- **Command history** — per-connection with navigation
+
+### TUI Integration (Spectre.Console)
+- **Rich output** — tables, panels, rules, trees, bar charts
+- **Interactive prompts** — selection, multi-select, confirmation, text input
+- **Live displays** — progress bars, spinners, live-updating tables
+
+### Shell Commands
+| Command | Description |
+|---------|-------------|
+| `help` | Show available commands |
+| `status` | Server status with process ID |
+| `whoami` | Connection info, auth method, key fingerprint |
+| `config` | Server configuration (hostname, IPs, settings) |
+| `clear` | Clear the screen |
+| `menu` | Interactive menu selection |
+| `select` | Choose from a list |
+| `multi` | Multi-select from a list |
+| `confirm` | Yes/No confirmation |
+| `ask` | Text input with validation |
+| `demo` | Run all interactive demos |
+| `progress` | Progress bar demo |
+| `spinner` | Status spinner demo |
+| `live` | Live-updating table demo |
+| `tree` | Hierarchical tree display |
+| `chart` | Bar chart visualization |
+| `quit` | Disconnect |
+
+## Quick Start
+
+### Run the Server
+```bash
+dotnet run --project src/SshServer.Host/SshServer.Host.csproj
+```
+
+### Connect
+```bash
+ssh -p 2222 localhost
+```
+
+### With Public Key Authentication
+1. Add your public key to `authorized_keys`:
+   ```bash
+   cat ~/.ssh/id_ed25519.pub >> src/SshServer.Host/authorized_keys
+   ```
+2. Set `AllowAnonymous` to `false` in `appsettings.json`
+3. Connect: `ssh -p 2222 localhost`
+
+## Configuration
+
+Settings in `appsettings.json`:
+
+```json
+{
+  "SshServer": {
+    "Port": 2222,
+    "Banner": "SSH-2.0-SshServer",
+    "HostKeyPath": "hostkey_ecdsa_nistp256.pem",
+    "MaxConnections": 100,
+    "LogLevel": "Debug",
+    "AllowAnonymous": true,
+    "AuthorizedKeysPath": "./authorized_keys"
+  }
+}
+```
+
+Override via environment variables (`SSHSERVER_` prefix) or command-line arguments.
+
+## Architecture
 
 ```
 ┌─────────────────────────────┐
-│  TUI Application Layer      │  Spectre.Console or Terminal.Gui
+│  TUI Application Layer      │  Spectre.Console
 ├─────────────────────────────┤
-│  SSH Shell/PTY Glue         │  maps SSH channels to TUI stdin/stdout
+│  SSH Shell/PTY Glue         │  LineEditor, CommandHandler
 ├─────────────────────────────┤
-│  SSH Server Library         │  FxSsh (modernised) or custom build
+│  SSH Server Library         │  FxSsh (modernised)
 ├─────────────────────────────┤
-│  TCP Listener               │  System.Net.Sockets.TcpListener
+│  TCP Listener               │  System.Net.Sockets
 └─────────────────────────────┘
 ```
 
-## Starting Point: FxSsh
+## Dependencies
 
-Repository: https://github.com/Aimeast/FxSsh
-NuGet: `FxSsh` v1.3.0
-License: MIT
-Last commit: January 2025
+| Package | Purpose |
+|---------|---------|
+| `FxSsh` | Core SSH server (vendored source) |
+| `Microsoft.Extensions.Hosting` | Configuration and DI |
+| `Microsoft.Extensions.Logging` | Structured logging |
+| `Spectre.Console` | TUI rendering and prompts |
+| `NSec.Cryptography` | Ed25519 key support |
 
-### Why FxSsh
+## Project Status
 
-- Targets .NET 8 exclusively — no legacy baggage
-- Zero external NuGet dependencies (uses only BCL crypto)
-- Implements PTY requests and shell channels — exactly what a TUI needs
-- Small codebase (~51 KB), readable and forkable
-- Tested against OpenSSH, PuTTY, and WinSCP clients
-- RFC compliant: 4250–4254, 4344, 5656, 6668, 8332
+### Completed
+- [x] SSH transport (key exchange, encryption, MAC)
+- [x] Anonymous and public key authentication
+- [x] PTY requests and window resize
+- [x] Emacs-style line editing with history
+- [x] Tab completion
+- [x] Spectre.Console integration (rendering + interactive prompts)
+- [x] Configuration via appsettings.json
+- [x] Graceful shutdown (Ctrl+C)
+- [x] Structured logging with connection IDs
+- [x] Ed25519 client key support
 
-### What FxSsh Already Provides
-
-| Feature | Status |
-|---|---|
-| TCP socket handling | ✓ |
-| SSH transport (key exchange, encryption, MAC) | ✓ |
-| Key exchange: DH, ECDH | ✓ |
-| Encryption: AES-CTR (128/192/256) | ✓ |
-| MAC: HMAC-SHA2-256/512 | ✓ |
-| Host keys: RSA (sha2-256/512), ECDSA (nistp256/384/521) | ✓ |
-| Password authentication | ✓ |
-| Public key authentication | ✓ |
-| PTY requests + window resize | ✓ |
-| Shell channels | ✓ |
-| Exec channels | ✓ |
-| SFTP subsystem | ✓ |
-| Anonymous authentication | ✗ — needs custom extension |
-
-### What Needs to Be Added / Changed
-
-1. **Anonymous authentication** — extend `UserAuthService` to accept a connection without
-   credentials. SSH protocol allows this via `none` auth method (RFC 4252 §5.2).
-2. **TUI I/O bridge** — wire a shell channel's stdin/stdout streams to the TUI framework's
-   console abstraction.
-3. **Host key generation on first run** — auto-generate and persist an Ed25519 host key if
-   none exists, so the server is zero-config for development.
-
-## Phased Roadmap
-
-### Phase 0 — Gather the parts
-- [ ] Fork or vendor FxSsh source into this repo
-- [ ] Upgrade framework to .net10
-- [ ] Upgrade libraries to .net10 versions
-- [ ] Modernize codebase, eliminate warnings in build
-
-### Phase 1 — Proof of Concept (anonymous access + PTY shell)
-- [x] Extend auth layer to support `none` auth method
-- [x] Wire a shell channel to a simple echo TUI (proves the pipe works)
-- [x] Auto-generate ECDSA host key on first start (Ed25519 deferred)
-- [x] Connect successfully from OpenSSH client (`ssh -o StrictHostKeyChecking=no localhost -p 2222`)
-- [x] Emacs-style line editing (Ctrl-A/E/B/F/D/K/U/L, backspace)
-
-### Phase 2 — TUI Integration
-- [x] Integrate Spectre.Console rendering into the shell channel stream (hybrid approach)
-- [x] Handle PTY resize events (`SSH_MSG_CHANNEL_REQUEST` with `window-change`)
-- [x] Support multiple concurrent connections
-
-### Phase 3 — Hardening
-- [ ] Password authentication (simple username/password lookup)
-- [ ] Public key authentication
+### Roadmap
+- [ ] Password authentication
 - [ ] Rate limiting / connection limits
-- [x] Logging (Microsoft.Extensions.Logging) — structured logging with connection IDs
+- [ ] Unit tests
+- [ ] NuGet package
 
-### Phase 4 — Production Readiness
-- [x] Configuration via `appsettings.json` with environment variables and CLI args
-- [x] Graceful shutdown (`CancellationToken` propagation, Ctrl+C handling)
-- [ ] Unit tests for transport and auth layers
-- [ ] NuGet package (optional)
-
-## Key RFCs for Reference
+## Key RFCs
 
 | RFC | Topic |
-|---|---|
+|-----|-------|
 | 4251 | SSH Protocol Architecture |
-| 4252 | SSH Authentication Protocol (includes `none` auth) |
+| 4252 | SSH Authentication Protocol |
 | 4253 | SSH Transport Layer Protocol |
 | 4254 | SSH Connection Protocol (channels, PTY) |
 | 5656 | ECDH key exchange |
 | 8032 | Ed25519 signing |
 
-## NuGet Packages to Evaluate
+## License
 
-| Package | Purpose |
-|---|---|
-| `FxSsh` | Core SSH server (may vendor source instead) |
-| `Microsoft.Extensions.Hosting` | Hosted service / DI integration |
-| `Microsoft.Extensions.Logging` | Structured logging |
-| `Spectre.Console` | TUI rendering (Phase 2) |
-| `BouncyCastle.Cryptography` | Fallback crypto if BCL lacks something (e.g. Ed25519 host keys pre-.NET 8) |
-
-
-
+MIT
