@@ -23,7 +23,21 @@ AppDomain.CurrentDomain.ProcessExit += (_, _) =>
 
 await using var host = SshServerHost.CreateBuilder()
     .UseDefaultConfiguration(args)
-    .UseApplication<DemoApp>()
+
+    // Map specific usernames directly to apps (no menu)
+    .MapUser<DemoApp>("demo")
+    .MapUser<AdminApp>("admin")
+    .MapUser<MonitoringApp>("monitor")
+
+    // Unknown usernames get the app selection menu
+    .UseApplicationMenu(menu => menu
+        .WithTitle("Select an application:")
+        .Add<DemoApp>("Demo", "Spectre.Console showcase with tables, charts, and prompts")
+        .Add<AdminApp>("Admin", "Server administration and log viewer")
+        .Add<MonitoringApp>("Monitor", "Live system metrics and health dashboard")
+        .SetDefaultForExec("Demo")
+        .ReturnToMenuOnExit(true))
+
     .Build();
 
 await host.RunAsync(cts.Token);

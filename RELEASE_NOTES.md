@@ -1,5 +1,57 @@
 # Release Notes
 
+## 2026-02-23 (15)
+
+### Added
+- **Multi-application support** with two routing strategies:
+
+  **Username-based routing** — map usernames directly to apps:
+  ```csharp
+  .MapUser<DemoApp>("demo")      // ssh demo@host → DemoApp
+  .MapUser<AdminApp>("admin")    // ssh admin@host → AdminApp
+  ```
+
+  **Interactive menu** — for unmapped usernames:
+  ```csharp
+  .UseApplicationMenu(menu => menu
+      .Add<DemoApp>("Demo", "Spectre.Console showcase")
+      .Add<AdminApp>("Admin", "Server administration")
+      .ReturnToMenuOnExit(true))
+  ```
+
+- **AppLauncherApplication** — internal app that displays selection menu
+- **AppMenuConfiguration** — fluent configuration for menu apps
+- **Exec command routing** with `appname:command` prefix syntax:
+  ```bash
+  ssh guest@host "admin:users"   # Run 'users' in AdminApp
+  ssh guest@host "demo:status"   # Run 'status' in DemoApp
+  ```
+
+- **New demo applications**:
+  - `AdminApp` — server administration with users, logs, config commands
+  - `MonitoringApp` — live metrics, health checks, alerts, charts
+
+### Changed
+- Demo Program.cs now showcases multi-app configuration
+- Users can type `menu` or `apps` to return to app selection
+
+### Usage
+```bash
+# Direct access via username mapping
+ssh demo@localhost -p 2222      # → DemoApp
+ssh admin@localhost -p 2222     # → AdminApp
+ssh monitor@localhost -p 2222   # → MonitoringApp
+
+# Menu access for other usernames
+ssh localhost -p 2222           # → Shows app selection menu
+ssh guest@localhost -p 2222     # → Shows app selection menu
+
+# Exec with app prefix
+ssh guest@localhost "admin:users"
+```
+
+---
+
 ## 2026-02-23 (14)
 
 ### Added

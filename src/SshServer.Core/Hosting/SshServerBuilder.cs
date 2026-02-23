@@ -9,8 +9,10 @@ namespace SshServer;
 public class SshServerBuilder
 {
     private readonly SshServerOptions _options = new();
+    private readonly Dictionary<string, Func<SshShellApplication>> _userMappings = new(StringComparer.OrdinalIgnoreCase);
     private Action<ILoggingBuilder>? _loggingConfiguration;
     private Func<SshShellApplication>? _applicationFactory;
+    private AppMenuConfiguration? _menuConfiguration;
     private IConfiguration? _configuration;
 
     /// <summary>
@@ -106,6 +108,42 @@ public class SshServerBuilder
     }
 
     /// <summary>
+    /// Map a username to a specific application.
+    /// When a user connects with this username, they go directly to this app (no menu).
+    /// </summary>
+    /// <typeparam name="TApp">The application type.</typeparam>
+    /// <param name="username">The username to map.</param>
+    public SshServerBuilder MapUser<TApp>(string username) where TApp : SshShellApplication, new()
+    {
+        _userMappings[username] = () => new TApp();
+        return this;
+    }
+
+    /// <summary>
+    /// Map a username to a specific application factory.
+    /// When a user connects with this username, they go directly to this app (no menu).
+    /// </summary>
+    /// <param name="username">The username to map.</param>
+    /// <param name="factory">Factory function that creates the application.</param>
+    public SshServerBuilder MapUser(string username, Func<SshShellApplication> factory)
+    {
+        _userMappings[username] = factory;
+        return this;
+    }
+
+    /// <summary>
+    /// Configure an application selection menu for unmapped usernames.
+    /// Users who connect with an unmapped username will see a menu to choose an app.
+    /// </summary>
+    /// <param name="configure">Action to configure the menu.</param>
+    public SshServerBuilder UseApplicationMenu(Action<AppMenuConfiguration> configure)
+    {
+        _menuConfiguration = new AppMenuConfiguration();
+        configure(_menuConfiguration);
+        return this;
+    }
+
+    /// <summary>
     /// Configure logging for the SSH server.
     /// </summary>
     public SshServerBuilder ConfigureLogging(Action<ILoggingBuilder> configure)
@@ -153,13 +191,27 @@ public class SshServerBuilder
             _configuration.GetSection(SshServerOptions.SectionName).Bind(_options);
         }
 
-        // Validate
-        if (_applicationFactory == null)
+        // Validate - need at least one of: application, user mappings, or menu
+        if (_applicationFactory == null && _userMappings.Count == 0 && _menuConfiguration == null)
         {
             throw new InvalidOperationException(
-                "No application registered. Call UseApplication<TApp>() before Build().");
+                "No application registered. Call UseApplication<TApp>(), MapUser(), or UseApplicationMenu() before Build().");
         }
 
-        return new SshServerHost(_options, _applicationFactory, _loggingConfiguration);
+        // If menu is configured but no default app, use the menu as the default
+        if (_applicationFactory == null && _menuConfiguration != null)
+        {
+            _applicationFactory = () => new AppLauncherApplication(_menuConfiguration);
+        }
+
+        // If only user mappings are configured (no default), we need a fallback
+        if (_applicationFactory == null && _userMappings.Count > 0)
+        {
+            // Use the first mapped app as default
+            var firstMapping = _userMappings.First();
+            _applicationFactory = firstMapping.Value;
+        }
+
+        return new SshServerHost(_options, _applicationFactory!, _userMappings, _menuConfiguration, _loggingConfiguration);
     }
 }

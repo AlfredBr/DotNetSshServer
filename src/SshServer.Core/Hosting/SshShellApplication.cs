@@ -176,6 +176,52 @@ public abstract class SshShellApplication
     #region Internal Framework Methods
 
     /// <summary>
+    /// Initialize the application for delegation (used by AppLauncherApplication).
+    /// </summary>
+    internal void InitializeForDelegation(IAnsiConsole console, ConnectionInfo connInfo, SshServerOptions options, Action<string>? disconnect)
+    {
+        _console = console;
+        Connection = connInfo;
+        Options = options;
+        _disconnect = disconnect;
+    }
+
+    /// <summary>
+    /// Invoke OnWelcome. Used by AppLauncherApplication.
+    /// </summary>
+    internal void InvokeOnWelcome() => OnWelcome();
+
+    /// <summary>
+    /// Invoke OnCommand. Used by AppLauncherApplication.
+    /// </summary>
+    internal bool InvokeOnCommand(string command) => OnCommand(command);
+
+    /// <summary>
+    /// Invoke OnConnect. Used by AppLauncherApplication.
+    /// </summary>
+    internal void InvokeOnConnect() => OnConnect();
+
+    /// <summary>
+    /// Invoke OnDisconnect. Used by AppLauncherApplication.
+    /// </summary>
+    internal void InvokeOnDisconnect() => OnDisconnect();
+
+    /// <summary>
+    /// Get the prompt. Used by AppLauncherApplication.
+    /// </summary>
+    internal string GetPrompt() => Prompt;
+
+    /// <summary>
+    /// Get completions. Used by AppLauncherApplication.
+    /// </summary>
+    internal IEnumerable<string> GetCompletions() => Completions;
+
+    /// <summary>
+    /// Invoke OnExec. Used by AppLauncherApplication.
+    /// </summary>
+    internal string? InvokeOnExec(string command) => OnExec(command);
+
+    /// <summary>
     /// Initialize and run the application. Called by the framework.
     /// </summary>
     internal void Run(

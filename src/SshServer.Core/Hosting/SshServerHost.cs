@@ -16,7 +16,9 @@ namespace SshServer;
 public sealed class SshServerHost : IAsyncDisposable
 {
     private readonly SshServerOptions _options;
-    private readonly Func<SshShellApplication> _applicationFactory;
+    private readonly Func<SshShellApplication> _defaultApplicationFactory;
+    private readonly Dictionary<string, Func<SshShellApplication>> _userMappings;
+    private readonly AppMenuConfiguration? _menuConfiguration;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger _logger;
     private readonly AuthorizedKeysStore _authorizedKeys;
@@ -28,10 +30,14 @@ public sealed class SshServerHost : IAsyncDisposable
     internal SshServerHost(
         SshServerOptions options,
         Func<SshShellApplication> applicationFactory,
+        Dictionary<string, Func<SshShellApplication>> userMappings,
+        AppMenuConfiguration? menuConfiguration,
         Action<ILoggingBuilder>? loggingConfiguration)
     {
         _options = options;
-        _applicationFactory = applicationFactory;
+        _defaultApplicationFactory = applicationFactory;
+        _userMappings = new Dictionary<string, Func<SshShellApplication>>(userMappings, StringComparer.OrdinalIgnoreCase);
+        _menuConfiguration = menuConfiguration;
 
         // Setup logging
         var logLevel = Enum.TryParse<LogLevel>(_options.LogLevel, ignoreCase: true, out var level)
@@ -92,6 +98,18 @@ public sealed class SshServerHost : IAsyncDisposable
             _logger.LogInformation("Public key authentication required ({Count} keys loaded)", _authorizedKeys.Count);
         }
 
+        // Log user mappings
+        if (_userMappings.Count > 0)
+        {
+            _logger.LogInformation("User mappings configured: {Users}", string.Join(", ", _userMappings.Keys));
+        }
+
+        // Log menu configuration
+        if (_menuConfiguration != null)
+        {
+            _logger.LogInformation("Application menu configured with {Count} apps", _menuConfiguration.Apps.Count);
+        }
+
         // Create and start server
         _server = new global::FxSsh.SshServer(new StartingInfo(IPAddress.IPv6Any, _options.Port, _options.Banner));
         HostKeyStore.EnsureAndRegister(_server, _options.HostKeyPath);
@@ -141,6 +159,27 @@ public sealed class SshServerHost : IAsyncDisposable
         _cts.Dispose();
         _loggerFactory.Dispose();
     }
+
+    #region Application Resolution
+
+    /// <summary>
+    /// Get the application factory for a given username.
+    /// </summary>
+    private Func<SshShellApplication> GetApplicationFactory(string username)
+    {
+        // Check user mappings first
+        if (_userMappings.TryGetValue(username, out var factory))
+        {
+            _logger.LogDebug("Using mapped application for user '{Username}'", username);
+            return factory;
+        }
+
+        // Fall back to default (which may be the menu launcher)
+        _logger.LogDebug("Using default application for user '{Username}'", username);
+        return _defaultApplicationFactory;
+    }
+
+    #endregion
 
     #region Event Handlers
 
@@ -236,6 +275,9 @@ public sealed class SshServerHost : IAsyncDisposable
     {
         _logger.LogInformation("[{ConnId}] Channel: {ShellType}", connInfo.ConnectionId, e.ShellType);
 
+        // Get the appropriate application factory based on username
+        var appFactory = GetApplicationFactory(connInfo.Username);
+
         // Handle exec channel (single command execution)
         if (e.ShellType == "exec")
         {
@@ -246,7 +288,7 @@ public sealed class SshServerHost : IAsyncDisposable
             _logger.LogInformation("[{ConnId}] Exec: {Command}", connInfo.ConnectionId, execCommand);
 
             // Run command and send output
-            var execApp = _applicationFactory();
+            var execApp = appFactory();
             var output = execApp.RunExec(connInfo.ToRecord(), _options, execCommand, _logger);
 
             // Send output with proper line endings
@@ -305,7 +347,7 @@ public sealed class SshServerHost : IAsyncDisposable
         }
 
         // Create and run the application
-        var app = _applicationFactory();
+        var app = appFactory();
         app.Run(
             channel,
             consoleContext,

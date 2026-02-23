@@ -84,6 +84,36 @@ await SshServerHost.CreateBuilder()
     .RunAsync();
 ```
 
+## Multi-Application Support
+
+Host multiple applications with username-based routing or an interactive menu:
+
+```csharp
+await SshServerHost.CreateBuilder()
+    // Map usernames directly to apps
+    .MapUser<DemoApp>("demo")       // ssh demo@host → DemoApp
+    .MapUser<AdminApp>("admin")     // ssh admin@host → AdminApp
+
+    // Unmapped users see a selection menu
+    .UseApplicationMenu(menu => menu
+        .Add<DemoApp>("Demo", "Spectre.Console showcase")
+        .Add<AdminApp>("Admin", "Server administration")
+        .Add<MonitoringApp>("Monitor", "Live metrics dashboard")
+        .SetDefaultForExec("Demo")
+        .ReturnToMenuOnExit(true))
+
+    .Build()
+    .RunAsync();
+```
+
+**Usage:**
+```bash
+ssh demo@localhost -p 2222       # Direct to DemoApp
+ssh admin@localhost -p 2222      # Direct to AdminApp
+ssh localhost -p 2222            # Shows app selection menu
+ssh guest@localhost "admin:logs" # Exec 'logs' in AdminApp
+```
+
 ## Features
 
 ### Authentication
