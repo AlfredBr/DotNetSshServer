@@ -13,7 +13,7 @@ public class AdminApp : SshShellApplication
     protected override string Prompt => "[red]admin[/]> ";
 
     protected override IEnumerable<string> Completions =>
-        ["help", "users", "logs", "config", "restart", "shutdown", "clear", "menu", "exit"];
+        ["help", "users", "logs", "config", "restart", "shutdown", "clear", "exit"];
 
     protected override void OnConnect()
     {
@@ -28,7 +28,7 @@ public class AdminApp : SshShellApplication
     protected override void OnWelcome()
     {
         WriteLine("[bold red]Admin Console[/]");
-        WriteLine("[dim]Type 'help' for commands. Type 'menu' to return to app selection.[/]");
+        WriteLine("[dim]Type 'help' for commands.[/]");
         WriteLine();
     }
 
@@ -104,12 +104,11 @@ public class AdminApp : SshShellApplication
 
         table.AddRow("help", "Show this help message");
         table.AddRow("users", "Show active connections");
-        table.AddRow("logs [n]", "Show recent log entries (default: 10)");
+        table.AddRow("logs [[n]]", "Show recent log entries (default: 10)");
         table.AddRow("config", "Show server configuration");
         table.AddRow("restart", "Simulate server restart");
         table.AddRow("shutdown", "Simulate server shutdown");
         table.AddRow("clear", "Clear the screen");
-        table.AddRow("menu", "Return to application menu");
         table.AddRow("exit", "Disconnect from admin console");
 
         Write(table);
@@ -261,6 +260,7 @@ public class AdminApp : SshShellApplication
             MaxConnections: {Options.MaxConnections}
             AllowAnonymous: {Options.AllowAnonymous}
             LogLevel: {Options.LogLevel}
+
             """;
     }
 
@@ -272,6 +272,7 @@ public class AdminApp : SshShellApplication
               logs      - Show recent log entries
               config    - Show server configuration
               help      - Show this help
+
             """;
     }
 }

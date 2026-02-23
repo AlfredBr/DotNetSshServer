@@ -12,12 +12,12 @@ public class MonitoringApp : SshShellApplication
     protected override string Prompt => "[cyan]monitor[/]> ";
 
     protected override IEnumerable<string> Completions =>
-        ["help", "metrics", "health", "alerts", "live", "chart", "clear", "menu", "exit"];
+        ["help", "metrics", "health", "alerts", "live", "chart", "clear", "exit"];
 
     protected override void OnWelcome()
     {
         WriteLine("[bold cyan]Monitoring Dashboard[/]");
-        WriteLine("[dim]Type 'help' for commands. Type 'menu' to return to app selection.[/]");
+        WriteLine("[dim]Type 'help' for commands.[/]");
         WriteLine();
     }
 
@@ -99,7 +99,6 @@ public class MonitoringApp : SshShellApplication
         table.AddRow("live", "Show live updating metrics (5 seconds)");
         table.AddRow("chart", "Show metrics as bar chart");
         table.AddRow("clear", "Clear the screen");
-        table.AddRow("menu", "Return to application menu");
         table.AddRow("exit", "Disconnect from monitoring");
 
         Write(table);
@@ -284,7 +283,7 @@ public class MonitoringApp : SshShellApplication
 
     private static List<(string Severity, DateTime Time, string Message)> GenerateAlerts()
     {
-        var alerts = new List<(string, DateTime, string)>();
+        var alerts = new List<(string Severity, DateTime Time, string Message)>();
         var now = DateTime.Now;
 
         // Randomly generate 0-3 alerts
@@ -319,11 +318,13 @@ public class MonitoringApp : SshShellApplication
 
     private string GetHealthStatus()
     {
-        return """
+        return $"""
             System Health: OK
             SSH Server: Healthy
             Authentication: Operational
-            Uptime: """ + FormatUptime() + "\n";
+            Uptime: {FormatUptime()}
+
+            """;
     }
 
     private string GetMetricsSummary()
@@ -334,6 +335,7 @@ public class MonitoringApp : SshShellApplication
             CPU: {cpu}%
             Memory: {memory}%
             Uptime: {FormatUptime()}
+
             """;
     }
 
@@ -355,6 +357,7 @@ public class MonitoringApp : SshShellApplication
               metrics   - Show current metrics
               alerts    - Show active alerts
               help      - Show this help
+
             """;
     }
 }

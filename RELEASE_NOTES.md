@@ -1,5 +1,19 @@
 # Release Notes
 
+## 2026-02-23 (16)
+
+### Fixed
+- **Prompt markup rendering** — colored prompts (e.g., `[red]admin[/]>`) now render correctly instead of showing raw markup tags
+- **Menu keyboard input** — interactive menu selection now responds to arrow keys properly; fixed by wiring up input handler before displaying prompts
+- **Spectre markup escaping** — fixed "malformed markup tag" error in AdminApp help by escaping square brackets in `logs [n]` as `logs [[n]]`
+- **Exec output newlines** — all exec command outputs now include proper trailing newlines
+
+### Changed
+- Removed `menu` command from AdminApp and MonitoringApp when accessed via direct username mapping (command only applies when using app launcher menu)
+- Updated DEVELOPERS.md with multi-application support documentation
+
+---
+
 ## 2026-02-23 (15)
 
 ### Added

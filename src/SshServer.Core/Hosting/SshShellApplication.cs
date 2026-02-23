@@ -238,22 +238,25 @@ public abstract class SshShellApplication
         Options = options;
         _disconnect = disconnect;
 
-        // Setup line editor
+        // Setup line editor with plain text prompt (we render markup separately)
         _lineEditor = new LineEditor(data => channel.SendData(data))
         {
             Completions = Completions.ToArray(),
-            Prompt = Prompt
+            Prompt = "" // We render the prompt with markup below
         };
 
         // Track prompt mode for input routing
         var inPromptMode = false;
 
-        // Lifecycle: connect
-        OnConnect();
-        OnWelcome();
-        _lineEditor.ShowPrompt();
+        // Helper to show prompt with markup rendering
+        void ShowPrompt()
+        {
+            _console.Markup(Prompt);
+            _lineEditor.Completions = Completions.ToArray();
+            _lineEditor.ShowPrompt(); // Shows cursor position after markup
+        }
 
-        // Wire up data received handler
+        // Wire up data received handler FIRST so prompts in OnWelcome can receive input
         channel.DataReceived += (_, data) =>
         {
             // Update activity timestamp for session timeout
@@ -304,10 +307,8 @@ public abstract class SshShellApplication
                                 inPromptMode = false;
                                 consoleContext.Input.Clear();
 
-                                // Update prompt and completions in case they changed
-                                _lineEditor.Prompt = Prompt;
-                                _lineEditor.Completions = Completions.ToArray();
-                                _lineEditor.ShowPrompt();
+                                // Show prompt with markup
+                                ShowPrompt();
                             }
                         });
                         return;
@@ -318,6 +319,24 @@ public abstract class SshShellApplication
                 }
             }
         };
+
+        // Lifecycle: connect and welcome (AFTER data handler is wired)
+        // Run welcome in prompt mode so interactive prompts work
+        inPromptMode = true;
+        Task.Run(() =>
+        {
+            try
+            {
+                OnConnect();
+                OnWelcome();
+            }
+            finally
+            {
+                inPromptMode = false;
+                consoleContext.Input.Clear();
+                ShowPrompt();
+            }
+        });
     }
 
     /// <summary>

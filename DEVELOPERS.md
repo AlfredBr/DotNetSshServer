@@ -314,6 +314,91 @@ protected override bool OnCommand(string command)
 }
 ```
 
+## Multi-Application Support
+
+Host multiple applications with username-based routing and/or an interactive menu.
+
+### Username-Based Routing
+
+Map specific usernames directly to applications:
+
+```csharp
+await SshServerHost.CreateBuilder()
+    .MapUser<AdminApp>("admin")      // ssh admin@host → AdminApp
+    .MapUser<MonitorApp>("monitor")  // ssh monitor@host → MonitorApp
+    .UseApplication<DefaultApp>()    // Fallback for other users
+    .Build()
+    .RunAsync();
+```
+
+### Interactive Menu
+
+Show a selection menu for unmapped users:
+
+```csharp
+await SshServerHost.CreateBuilder()
+    .MapUser<AdminApp>("admin")      // Direct access for admin
+
+    .UseApplicationMenu(menu => menu
+        .WithTitle("Select an application:")
+        .Add<DemoApp>("Demo", "Interactive demos and examples")
+        .Add<AdminApp>("Admin", "Server administration")
+        .Add<MonitorApp>("Monitor", "Live system metrics")
+        .SetDefaultForExec("Demo")   // Default app for exec commands
+        .ReturnToMenuOnExit(true))   // Return to menu instead of disconnect
+
+    .Build()
+    .RunAsync();
+```
+
+### Exec Command Routing
+
+For menu users, exec commands can target specific apps with `appname:command` syntax:
+
+```bash
+# Direct user mapping
+ssh admin@host "users"           # Runs 'users' in AdminApp
+
+# Menu users with app prefix
+ssh guest@host "admin:users"     # Runs 'users' in AdminApp
+ssh guest@host "monitor:health"  # Runs 'health' in MonitorApp
+ssh guest@host "status"          # Runs 'status' in default app (Demo)
+```
+
+### Complete Multi-App Example
+
+```csharp
+public class AdminApp : SshShellApplication
+{
+    protected override string Prompt => "[red]admin[/]> ";
+
+    protected override IEnumerable<string> Completions =>
+        ["help", "users", "logs", "config", "exit"];
+
+    protected override void OnWelcome()
+    {
+        WriteLine("[bold red]Admin Console[/]");
+        WriteLine("[dim]Type 'help' for commands.[/]");
+    }
+
+    protected override string? OnExec(string command)
+    {
+        return command switch
+        {
+            "users" => $"Active connections: {GetConnectionCount()}\n",
+            "config" => GetConfigSummary(),
+            _ => null  // Fall back to OnCommand
+        };
+    }
+
+    protected override bool OnCommand(string command)
+    {
+        // Interactive command handling
+        return command != "exit";
+    }
+}
+```
+
 ## Configuration
 
 ### Using appsettings.json
