@@ -1,5 +1,15 @@
 # Release Notes
 
+## 2026-02-22 (10)
+
+### Changed
+- **Major refactoring**: Extracted `LineEditor` class from Program.cs
+  - Program.cs reduced from 714 to 261 lines
+  - LineEditor is now a reusable, testable component (554 lines)
+  - Clear separation: Program.cs handles server orchestration, LineEditor handles input
+
+---
+
 ## 2026-02-22 (9)
 
 ### Added
