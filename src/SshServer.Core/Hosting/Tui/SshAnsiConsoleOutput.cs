@@ -4,7 +4,7 @@ using FxSsh.Services;
 
 using Spectre.Console;
 
-namespace SshServer.Host.Tui;
+namespace SshServer.Tui;
 
 /// <summary>
 /// Implements IAnsiConsoleOutput to direct Spectre.Console rendering to an SSH channel.

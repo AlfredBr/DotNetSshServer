@@ -1,4 +1,4 @@
-namespace SshServer.Host;
+namespace SshServer;
 
 /// <summary>
 /// Configuration options for the SSH server.

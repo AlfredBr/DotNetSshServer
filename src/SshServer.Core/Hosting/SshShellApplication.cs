@@ -5,21 +5,11 @@ using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
-using SshServer.Host.Tui;
+using SshServer.Tui;
 
-using static SshServer.Host.Tui.SshConsoleFactory;
+using static SshServer.Tui.SshConsoleFactory;
 
-namespace SshServer.Host;
-
-/// <summary>
-/// Connection information passed to the application.
-/// </summary>
-public record ConnectionInfo(
-    string ConnectionId,
-    string Username,
-    string AuthMethod,
-    string? KeyFingerprint = null
-);
+namespace SshServer;
 
 /// <summary>
 /// Abstract base class for SSH shell applications.
@@ -195,7 +185,7 @@ public abstract class SshShellApplication
         SshServerOptions options,
         Action<string?> disconnect,
         Action updateActivity,
-        Microsoft.Extensions.Logging.ILogger logger)
+        ILogger logger)
     {
         _console = consoleContext.Console;
         Connection = connInfo;
@@ -292,7 +282,7 @@ public abstract class SshShellApplication
         ConnectionInfo connInfo,
         SshServerOptions options,
         string command,
-        Microsoft.Extensions.Logging.ILogger logger)
+        ILogger logger)
     {
         Connection = connInfo;
         Options = options;

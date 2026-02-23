@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace SshServer.Host.Tui;
+namespace SshServer.Tui;
 
 /// <summary>
 /// Result of processing input bytes.

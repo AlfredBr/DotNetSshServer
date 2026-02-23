@@ -1,5 +1,61 @@
 # Release Notes
 
+## 2026-02-23 (14)
+
+### Added
+- **NuGet package structure**:
+  - Single `SshServer` package containing all functionality
+  - Package metadata added to Core project (PackageId, Version, Description, etc.)
+  - README.md included in package
+
+- **Fluent builder API** for server configuration:
+  - `SshServerHost.CreateBuilder()` — entry point
+  - `UsePort()`, `UseBanner()`, `UseHostKeyPath()` — network config
+  - `AllowAnonymous()`, `UseAuthorizedKeysFile()` — authentication
+  - `UseSessionTimeout()`, `UseMaxConnections()` — session management
+  - `UseLogLevel()`, `ConfigureLogging()` — logging
+  - `UseApplication<TApp>()` — register shell application
+  - `UseDefaultConfiguration()` — load appsettings.json/env/CLI
+  - `Build()` returns `SshServerHost` with `RunAsync()`
+
+- **SshServerHost class**:
+  - Main server lifecycle management
+  - Implements `IAsyncDisposable`
+  - `RunAsync()` starts server and waits for cancellation
+  - `StopAsync()` gracefully stops the server
+  - Internal connection handling extracted from Program.cs
+
+### Changed
+- **Project reorganization**:
+  - `SshServer.Host` renamed to `SshServer.Demo`
+  - TUI infrastructure moved from Host to Core (`SshServer.Core/Hosting/`)
+  - Namespaces changed from `SshServer.Host` to `SshServer`
+  - All dependencies consolidated in Core package
+
+- **Simplified demo Program.cs**:
+  - Reduced from 335 lines to 25 lines
+  - Now uses builder API exclusively
+
+### Migration Guide
+Before:
+```csharp
+// Complex setup in Program.cs with manual event wiring
+var server = new FxSsh.SshServer(...);
+server.ConnectionAccepted += OnConnectionAccepted;
+// ... 300+ lines of event handling
+```
+
+After:
+```csharp
+await SshServerHost.CreateBuilder()
+    .UseDefaultConfiguration(args)
+    .UseApplication<DemoApp>()
+    .Build()
+    .RunAsync();
+```
+
+---
+
 ## 2026-02-23 (13)
 
 ### Added

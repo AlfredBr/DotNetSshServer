@@ -1,4 +1,4 @@
 <Solution>
   <Project Path="src/SshServer.Core/SshServer.Core.csproj" />
-  <Project Path="src/SshServer.Host/SshServer.Host.csproj" />
+  <Project Path="src/SshServer.Demo/SshServer.Demo.csproj" />
 </Solution>

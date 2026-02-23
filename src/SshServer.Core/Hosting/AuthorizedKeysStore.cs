@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace SshServer.Host;
+namespace SshServer;
 
 /// <summary>
 /// Stores and validates authorized public keys from an authorized_keys file.

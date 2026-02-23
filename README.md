@@ -3,23 +3,19 @@
 A lightweight SSH server library in C# (.NET 10) that allows terminal clients to connect
 via SSH and interact with a TUI application. Inspired by charmbracelet's [wish](https://github.com/charmbracelet/wish) package in Go.
 
-## Project Structure
+## Quick Start
 
-| Project | Description |
-|---------|-------------|
-| **SshServer.Core** | The SSH server library — handles connections, authentication, PTY, and channels. |
-| **SshServer.Host** | Demo application and framework for building SSH TUI apps. |
+### Install the Package
 
-### Key Classes
+```bash
+dotnet add package SshServer
+```
 
-| Class | Description |
-|-------|-------------|
-| `SshShellApplication` | Abstract base class for SSH applications. Inherit from this and override `OnCommand()`. |
-| `DemoApp` | Example implementation showcasing Spectre.Console features. |
-
-### Build Your Own App
+### Create Your Application
 
 ```csharp
+using SshServer;
+
 public class MyApp : SshShellApplication
 {
     protected override string Prompt => "myapp> ";
@@ -35,13 +31,64 @@ public class MyApp : SshShellApplication
 }
 ```
 
+### Run the Server
+
+```csharp
+await SshServerHost.CreateBuilder()
+    .UsePort(2222)
+    .AllowAnonymous()
+    .UseApplication<MyApp>()
+    .Build()
+    .RunAsync();
+```
+
+### Connect
+
+```bash
+ssh -p 2222 localhost
+```
+
 See [DEVELOPERS.md](DEVELOPERS.md) for the full guide.
+
+## Project Structure
+
+| Project | Description |
+|---------|-------------|
+| **SshServer** | The SSH server library — includes SSH protocol, TUI infrastructure, and builder API. |
+| **SshServer.Demo** | Demo application showcasing Spectre.Console features. |
+
+### Key Classes
+
+| Class | Description |
+|-------|-------------|
+| `SshServerHost` | Main server host with fluent builder API. |
+| `SshServerBuilder` | Fluent builder for configuring the server. |
+| `SshShellApplication` | Abstract base class for SSH applications. |
+
+## Builder API
+
+```csharp
+await SshServerHost.CreateBuilder()
+    .UsePort(2222)                              // TCP port (default: 2222)
+    .UseBanner("SSH-2.0-MyApp")                 // SSH protocol banner
+    .UseHostKeyPath("mykey.pem")                // Host key file path
+    .AllowAnonymous()                           // Enable anonymous auth
+    .UseAuthorizedKeysFile("authorized_keys")   // Public key auth file
+    .UseSessionTimeout(TimeSpan.FromMinutes(30)) // Idle timeout
+    .UseMaxConnections(100)                     // Connection limit
+    .UseLogLevel(LogLevel.Information)          // Minimum log level
+    .UseApplication<MyApp>()                    // Your application class
+    .ConfigureLogging(builder => { ... })       // Custom logging config
+    .UseDefaultConfiguration(args)              // Load from appsettings.json
+    .Build()
+    .RunAsync();
+```
 
 ## Features
 
 ### Authentication
 - **Public key authentication** — supports ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256/384/521
-- **Anonymous access** — configurable via `AllowAnonymous` setting
+- **Anonymous access** — configurable via `AllowAnonymous()` builder method
 - **Authorized keys** — standard OpenSSH `authorized_keys` file format
 
 ### Host Keys
@@ -70,7 +117,14 @@ See [DEVELOPERS.md](DEVELOPERS.md) for the full guide.
 - **Interactive prompts** — selection, multi-select, confirmation, text input
 - **Live displays** — progress bars, spinners, live-updating tables
 
-### Shell Commands
+## Run the Demo
+
+```bash
+dotnet run --project src/SshServer.Demo/SshServer.Demo.csproj
+ssh -p 2222 localhost
+```
+
+### Demo Commands
 | Command | Description |
 |---------|-------------|
 | `help` | Show available commands |
@@ -91,22 +145,10 @@ See [DEVELOPERS.md](DEVELOPERS.md) for the full guide.
 | `chart` | Bar chart visualization |
 | `quit` | Disconnect |
 
-## Quick Start
-
-### Run the Server
-```bash
-dotnet run --project src/SshServer.Host/SshServer.Host.csproj
-```
-
-### Connect
-```bash
-ssh -p 2222 localhost
-```
-
 ### With Public Key Authentication
 1. Add your public key to `authorized_keys`:
    ```bash
-   cat ~/.ssh/id_ed25519.pub >> src/SshServer.Host/authorized_keys
+   cat ~/.ssh/id_ed25519.pub >> src/SshServer.Demo/authorized_keys
    ```
 2. Set `AllowAnonymous` to `false` in `appsettings.json`
 3. Connect: `ssh -p 2222 localhost`
@@ -125,7 +167,7 @@ echo "Server says: $result"
 
 ## Configuration
 
-Settings in `appsettings.json`:
+Settings can be configured via `appsettings.json`:
 
 ```json
 {
@@ -140,6 +182,15 @@ Settings in `appsettings.json`:
     "SessionTimeoutMinutes": 0
   }
 }
+```
+
+Load configuration in your app:
+```csharp
+await SshServerHost.CreateBuilder()
+    .UseDefaultConfiguration(args)  // Loads appsettings.json + env vars + CLI args
+    .UseApplication<MyApp>()
+    .Build()
+    .RunAsync();
 ```
 
 | Setting | Description |
@@ -160,6 +211,8 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 ```
 ┌─────────────────────────────┐
 │  Your Application           │  extends SshShellApplication
+├─────────────────────────────┤
+│  SshServerHost + Builder    │  Fluent API, lifecycle management
 ├─────────────────────────────┤
 │  SshShellApplication        │  Base class with helpers
 ├─────────────────────────────┤
@@ -196,12 +249,13 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 - [x] Ed25519 client key support
 - [x] Session timeout
 - [x] SshShellApplication base class for easy app development
+- [x] Fluent builder API
+- [x] NuGet package structure
 
 ### Roadmap
 - [ ] Password authentication
 - [ ] Rate limiting / connection limits
 - [ ] Unit tests
-- [ ] NuGet package
 
 ## Key RFCs
 

@@ -1,4 +1,4 @@
-namespace SshServer.Host.Tui;
+namespace SshServer.Tui;
 
 /// <summary>
 /// Parses ANSI escape sequences from SSH input into ConsoleKeyInfo.

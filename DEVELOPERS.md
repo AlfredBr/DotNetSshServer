@@ -1,40 +1,23 @@
 # Building Your Own SSH TUI Application
 
-This guide explains how to use this project as a foundation for building your own SSH-based terminal application.
+This guide explains how to build your own SSH-based terminal application using the SshServer library.
 
-## Project Structure
+## Quick Start
 
-```
-src/
-├── SshServer.Core/               # SSH protocol library (reusable)
-│   ├── Ssh/
-│   │   ├── Algorithms/           # Crypto: ECDSA, Ed25519, RSA, AES, HMAC
-│   │   ├── Messages/             # SSH protocol messages
-│   │   ├── Services/             # Auth, Connection, Channel management
-│   │   ├── Session.cs            # Main session handler
-│   │   └── SshServer.cs          # TCP listener and connection acceptor
-│   └── HostKeyStore.cs           # Host key generation and loading
-│
-└── SshServer.Host/               # Demo application (use as template)
-    ├── Program.cs                # Server startup and event wiring
-    ├── SshShellApplication.cs    # Abstract base class for applications
-    ├── DemoApp.cs                # Demo implementation
-    ├── SshServerOptions.cs       # Configuration model
-    ├── AuthorizedKeysStore.cs    # Public key authentication
-    └── Tui/
-        ├── LineEditor.cs         # Terminal line editing
-        ├── SshConsoleFactory.cs  # Creates Spectre.Console per connection
-        └── ...                   # Other TUI infrastructure
+### Step 1: Create a New Project
+
+```bash
+dotnet new console -n MySSHApp
+cd MySSHApp
+dotnet add package SshServer
 ```
 
-## Quick Start: Create Your Own Application
+### Step 2: Create Your Application
 
-### Step 1: Inherit from SshShellApplication
-
-Create a new class that inherits from `SshShellApplication`:
+Create a class that inherits from `SshShellApplication`:
 
 ```csharp
-using SshServer.Host;
+using SshServer;
 
 public class MyApp : SshShellApplication
 {
@@ -78,21 +61,60 @@ public class MyApp : SshShellApplication
 }
 ```
 
-### Step 2: Register Your Application
-
-In `Program.cs`, replace `DemoApp` with your class:
+### Step 3: Configure and Run the Server
 
 ```csharp
-// In OnCommandOpened method:
-var app = new MyApp();  // Changed from DemoApp
-app.Run(channel, consoleContext, connInfo.ToRecord(), options, Disconnect, updateActivity, logger);
+using SshServer;
+
+await SshServerHost.CreateBuilder()
+    .UsePort(2222)
+    .AllowAnonymous()
+    .UseApplication<MyApp>()
+    .Build()
+    .RunAsync();
 ```
 
-### Step 3: Run
+### Step 4: Connect
 
 ```bash
-dotnet run --project src/SshServer.Host/SshServer.Host.csproj
 ssh -p 2222 localhost
+```
+
+## Builder API Reference
+
+The `SshServerBuilder` provides a fluent API for configuring your server:
+
+```csharp
+await SshServerHost.CreateBuilder()
+    // Network
+    .UsePort(2222)                              // TCP port to listen on
+    .UseBanner("SSH-2.0-MyApp")                 // SSH protocol banner
+
+    // Security
+    .UseHostKeyPath("hostkey.pem")              // Path to host key file
+    .AllowAnonymous()                           // Enable anonymous authentication
+    .UseAuthorizedKeysFile("authorized_keys")   // Path to authorized_keys file
+
+    // Sessions
+    .UseSessionTimeout(TimeSpan.FromMinutes(30)) // Idle timeout
+    .UseMaxConnections(100)                      // Max concurrent connections
+
+    // Logging
+    .UseLogLevel(LogLevel.Information)           // Minimum log level
+    .ConfigureLogging(builder => {               // Custom logging configuration
+        builder.AddConsole();
+    })
+
+    // Configuration
+    .UseDefaultConfiguration(args)               // Load appsettings.json + env vars
+    .UseConfiguration(configuration)             // Use custom IConfiguration
+
+    // Application
+    .UseApplication<MyApp>()                     // Register your app class
+    .UseApplication(() => new MyApp(deps))       // Or use a factory
+
+    .Build()
+    .RunAsync();
 ```
 
 ## SshShellApplication Reference
@@ -149,15 +171,11 @@ public class MenuApp : SshShellApplication
 {
     protected override bool OnCommand(string command)
     {
-        // Ignore typed commands, use menu instead
         ShowMainMenu();
         return true;
     }
 
-    protected override void OnWelcome()
-    {
-        ShowMainMenu();
-    }
+    protected override void OnWelcome() => ShowMainMenu();
 
     private void ShowMainMenu()
     {
@@ -223,6 +241,13 @@ public class DbApp : SshShellApplication
         return true;
     }
 }
+
+// Usage with factory:
+await SshServerHost.CreateBuilder()
+    .UsePort(2222)
+    .UseApplication(() => new DbApp(CreateConnection()))
+    .Build()
+    .RunAsync();
 ```
 
 ### Exec Channel (Scripting Support)
@@ -291,7 +316,9 @@ protected override bool OnCommand(string command)
 
 ## Configuration
 
-Settings in `appsettings.json`:
+### Using appsettings.json
+
+Create `appsettings.json`:
 
 ```json
 {
@@ -308,11 +335,36 @@ Settings in `appsettings.json`:
 }
 ```
 
+Load it in your app:
+
+```csharp
+await SshServerHost.CreateBuilder()
+    .UseDefaultConfiguration(args)  // Loads appsettings.json + env + CLI
+    .UseApplication<MyApp>()
+    .Build()
+    .RunAsync();
+```
+
+### Environment Variables
+
+Override settings with `SSHSERVER_` prefix:
+
+```bash
+SSHSERVER_PORT=3333 dotnet run
+SSHSERVER_ALLOWANONYMOUS=false dotnet run
+```
+
 ## Authentication
 
 ### Anonymous Access
 
-Set `AllowAnonymous: true` in config. Good for dev/demo.
+```csharp
+await SshServerHost.CreateBuilder()
+    .AllowAnonymous()
+    .UseApplication<MyApp>()
+    .Build()
+    .RunAsync();
+```
 
 ### Public Key Authentication
 
@@ -322,21 +374,44 @@ Set `AllowAnonymous: true` in config. Good for dev/demo.
    ssh-rsa AAAA... another@host
    ```
 
-2. Set `AllowAnonymous: false` and `AuthorizedKeysPath` in config.
+2. Configure the server:
+   ```csharp
+   await SshServerHost.CreateBuilder()
+       .AllowAnonymous(false)
+       .UseAuthorizedKeysFile("authorized_keys")
+       .UseApplication<MyApp>()
+       .Build()
+       .RunAsync();
+   ```
 
-### Custom Authentication
+## Project Structure
 
-Modify the `UserAuth` event handler in `Program.cs`:
-
-```csharp
-authService.UserAuth += (_, args) =>
-{
-    if (args.AuthMethod == "publickey")
-    {
-        // Custom validation
-        args.Result = MyAuthService.ValidateKey(args.Username, args.Key);
-    }
-};
+```
+src/
+├── SshServer.Core/               # The SshServer NuGet package
+│   ├── Hosting/
+│   │   ├── SshServerHost.cs      # Server lifecycle management
+│   │   ├── SshServerBuilder.cs   # Fluent builder API
+│   │   ├── SshShellApplication.cs # Base class for apps
+│   │   ├── SshServerOptions.cs   # Configuration model
+│   │   ├── AuthorizedKeysStore.cs # Public key auth
+│   │   ├── ConnectionInfo.cs     # Connection metadata
+│   │   └── Tui/
+│   │       ├── LineEditor.cs     # Terminal line editing
+│   │       ├── SshConsoleFactory.cs # Spectre.Console per connection
+│   │       └── ...
+│   ├── Ssh/
+│   │   ├── Algorithms/           # Crypto: ECDSA, Ed25519, RSA, AES, HMAC
+│   │   ├── Messages/             # SSH protocol messages
+│   │   ├── Services/             # Auth, Connection, Channel management
+│   │   ├── Session.cs            # Main session handler
+│   │   └── SshServer.cs          # TCP listener
+│   └── HostKeyStore.cs           # Host key generation and loading
+│
+└── SshServer.Demo/               # Demo application (not published)
+    ├── Program.cs                # Simple builder usage example
+    ├── DemoApp.cs                # Demo implementation
+    └── appsettings.json          # Demo configuration
 ```
 
 ## Troubleshooting

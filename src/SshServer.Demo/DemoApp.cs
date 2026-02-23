@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-namespace SshServer.Host;
+namespace SshServer.Demo;
 
 /// <summary>
 /// Demo SSH shell application showcasing Spectre.Console features.
