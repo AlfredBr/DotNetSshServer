@@ -12,6 +12,10 @@
 - **Enhanced `status` command**:
   - Now displays server process ID
 - **Updated README.md** with comprehensive documentation
+- **Session timeout**:
+  - `SessionTimeoutMinutes` config option (0 = disabled)
+  - Automatically disconnects idle sessions after configured duration
+  - Displays timeout message before disconnecting
 
 ---
 

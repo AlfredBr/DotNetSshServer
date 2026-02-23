@@ -105,10 +105,22 @@ Settings in `appsettings.json`:
     "MaxConnections": 100,
     "LogLevel": "Debug",
     "AllowAnonymous": true,
-    "AuthorizedKeysPath": "./authorized_keys"
+    "AuthorizedKeysPath": "./authorized_keys",
+    "SessionTimeoutMinutes": 0
   }
 }
 ```
+
+| Setting | Description |
+|---------|-------------|
+| `Port` | TCP port to listen on (default: 2222) |
+| `Banner` | SSH protocol banner |
+| `HostKeyPath` | Path to host key PEM file |
+| `MaxConnections` | Max concurrent connections (0 = unlimited) |
+| `LogLevel` | Minimum log level (Trace, Debug, Information, Warning, Error) |
+| `AllowAnonymous` | Allow connections without authentication |
+| `AuthorizedKeysPath` | Path to OpenSSH authorized_keys file |
+| `SessionTimeoutMinutes` | Idle timeout in minutes (0 = disabled) |
 
 Override via environment variables (`SSHSERVER_` prefix) or command-line arguments.
 

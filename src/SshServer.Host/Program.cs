@@ -246,6 +246,11 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo con
     // Input mode: false = line editing, true = Spectre prompt
     var inPromptMode = false;
 
+    // Session timeout tracking
+    var lastActivity = DateTime.UtcNow;
+    var sessionClosed = false;
+    Timer? timeoutTimer = null;
+
     // Create Spectre console for this connection
     var ctx = SshConsoleFactory.Create(channel, termWidth, termHeight);
     var consoleOutput = ctx.Output;
@@ -263,12 +268,34 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo con
         ]
     };
 
-    void Disconnect()
+    void Disconnect(string? reason = null)
     {
-        logger.LogInformation("[{ConnId}] Disconnecting", connInfo.ConnectionId);
-        channel.SendData("\r\nGoodbye!\r\n"u8.ToArray());
+        if (sessionClosed) return;
+        sessionClosed = true;
+        timeoutTimer?.Dispose();
+
+        var message = reason != null ? $"\r\n{reason}\r\nGoodbye!\r\n" : "\r\nGoodbye!\r\n";
+        logger.LogInformation("[{ConnId}] Disconnecting{Reason}", connInfo.ConnectionId,
+            reason != null ? $": {reason}" : "");
+        channel.SendData(System.Text.Encoding.UTF8.GetBytes(message));
         channel.SendEof();
         channel.SendClose(0);
+    }
+
+    // Setup session timeout if configured
+    if (options.SessionTimeoutMinutes > 0)
+    {
+        var timeoutMs = options.SessionTimeoutMinutes * 60 * 1000;
+        timeoutTimer = new Timer(_ =>
+        {
+            var idle = DateTime.UtcNow - lastActivity;
+            if (idle.TotalMinutes >= options.SessionTimeoutMinutes)
+            {
+                Disconnect($"Session timed out after {options.SessionTimeoutMinutes} minute(s) of inactivity");
+            }
+        }, null, timeoutMs, timeoutMs);
+
+        logger.LogDebug("[{ConnId}] Session timeout set to {Minutes} minute(s)", connInfo.ConnectionId, options.SessionTimeoutMinutes);
     }
 
     // Welcome message via Spectre
@@ -277,6 +304,9 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo con
 
     channel.DataReceived += (_, data) =>
     {
+        // Update activity timestamp
+        lastActivity = DateTime.UtcNow;
+
         // If in prompt mode, route all input to Spectre
         if (inPromptMode)
         {
@@ -330,6 +360,8 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo con
 
     channel.CloseReceived += (_, _) =>
     {
+        sessionClosed = true;
+        timeoutTimer?.Dispose();
         logger.LogInformation("[{ConnId}] Channel closed by client", connInfo.ConnectionId);
         channel.SendClose(0);
     };

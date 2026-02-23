@@ -46,4 +46,10 @@ public class SshServerOptions
     /// If not set or file doesn't exist, public key auth is disabled.
     /// </summary>
     public string? AuthorizedKeysPath { get; set; }
+
+    /// <summary>
+    /// Session idle timeout in minutes. 0 = no timeout (default).
+    /// Sessions with no activity for this duration will be disconnected.
+    /// </summary>
+    public int SessionTimeoutMinutes { get; set; } = 0;
 }
