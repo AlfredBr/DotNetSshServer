@@ -158,8 +158,9 @@ public class CommandHandler
 
     private void ShowStatus()
     {
+        var processId = Environment.ProcessId;
         var panel = new Panel(
-            new Markup("[green]●[/] Server is [green]running[/]"))
+            new Markup($"[green]●[/] Server is [green]running[/] [dim](PID {processId})[/]"))
         {
             Header = new PanelHeader("[blue]Server Status[/]"),
             Border = BoxBorder.Rounded,
@@ -209,7 +210,9 @@ public class CommandHandler
 
         // Server identity
         var hostname = System.Net.Dns.GetHostName();
+        var processId = Environment.ProcessId;
         table.AddRow("Hostname", $"[yellow]{Markup.Escape(hostname)}[/]");
+        table.AddRow("Process ID", $"[yellow]{processId}[/]");
 
         try
         {
