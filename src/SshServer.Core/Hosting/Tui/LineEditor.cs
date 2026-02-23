@@ -50,6 +50,20 @@ public class LineEditor
     public string Prompt { get; set; } = "> ";
 
     /// <summary>
+    /// The visible width of the prompt (for cursor positioning when prompt is rendered externally).
+    /// If not set, defaults to Prompt.Length.
+    /// </summary>
+    public int PromptWidth { get; set; } = -1;
+
+    /// <summary>
+    /// Optional callback to render the prompt externally (for Spectre markup support).
+    /// Called on clear screen (Ctrl-L) to re-render the prompt.
+    /// </summary>
+    public Action? RenderPrompt { get; set; }
+
+    private int EffectivePromptWidth => PromptWidth >= 0 ? PromptWidth : Prompt.Length;
+
+    /// <summary>
     /// Gets the last submitted line after LineSubmitted result.
     /// </summary>
     public string SubmittedLine => _submittedLine;
@@ -430,14 +444,16 @@ public class LineEditor
 
     private void RedrawLine()
     {
-        _sendData(Encoding.ASCII.GetBytes($"\r{Prompt}{_buffer}"));
+        // Move to start, skip past prompt, write buffer, clear to end
+        _sendData(Encoding.ASCII.GetBytes($"\r\x1b[{EffectivePromptWidth}C{_buffer}"));
         _sendData("\x1b[K"u8.ToArray());
         CursorLeft(_buffer.Length - _cursorPos);
     }
 
     private void ReplaceLine(string text)
     {
-        _sendData(Encoding.UTF8.GetBytes($"\r{Prompt}"));
+        // Move to start, skip past prompt, clear to end
+        _sendData(Encoding.ASCII.GetBytes($"\r\x1b[{EffectivePromptWidth}C"));
         _sendData("\x1b[K"u8.ToArray());
 
         _buffer.Clear();
@@ -451,7 +467,13 @@ public class LineEditor
     private void ClearScreen()
     {
         _sendData("\x1b[2J\x1b[H"u8.ToArray());
-        _sendData(Encoding.UTF8.GetBytes(Prompt));
+        // Re-render prompt
+        if (RenderPrompt != null)
+            RenderPrompt();
+        else if (Prompt.Length > 0)
+            _sendData(Encoding.UTF8.GetBytes(Prompt));
+        else if (EffectivePromptWidth > 0)
+            _sendData(Encoding.ASCII.GetBytes($"\x1b[{EffectivePromptWidth}C"));
         if (_buffer.Length > 0)
         {
             _sendData(Encoding.UTF8.GetBytes(_buffer.ToString()));

@@ -248,13 +248,24 @@ public abstract class SshShellApplication
         // Track prompt mode for input routing
         var inPromptMode = false;
 
+        // Helper to render the prompt with Spectre markup
+        void RenderPrompt()
+        {
+            var prompt = Prompt;
+            _console.Markup(prompt);
+            _lineEditor.PromptWidth = Markup.Remove(prompt).Length;
+        }
+
         // Helper to show prompt with markup rendering
         void ShowPrompt()
         {
-            _console.Markup(Prompt);
+            RenderPrompt();
             _lineEditor.Completions = Completions.ToArray();
-            _lineEditor.ShowPrompt(); // Shows cursor position after markup
+            _lineEditor.ShowPrompt(); // Positions cursor after prompt
         }
+
+        // Set the render callback for Ctrl-L (clear screen)
+        _lineEditor.RenderPrompt = RenderPrompt;
 
         // Wire up data received handler FIRST so prompts in OnWelcome can receive input
         channel.DataReceived += (_, data) =>
