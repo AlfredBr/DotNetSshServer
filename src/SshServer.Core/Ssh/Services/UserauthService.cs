@@ -49,13 +49,24 @@ namespace FxSsh.Services
             }
         }
 
-        /// <summary>RFC 4252 §5.2 — accept anonymous connections immediately.</summary>
+        /// <summary>RFC 4252 §5.2 — anonymous auth ('none' method).</summary>
         private void HandleNoneAuth(RequestMessage message)
         {
             var args = new UserAuthArgs(_session, message.Username);
-            _session.RegisterService(message.ServiceName, args);
-            Succeed?.Invoke(this, message.ServiceName);
-            _session.SendMessage(new SuccessMessage());
+
+            // Fire event to let application decide whether to allow anonymous
+            UserAuth?.Invoke(this, args);
+
+            if (args.Result)
+            {
+                _session.RegisterService(message.ServiceName, args);
+                Succeed?.Invoke(this, message.ServiceName);
+                _session.SendMessage(new SuccessMessage());
+            }
+            else
+            {
+                _session.SendMessage(new FailureMessage());
+            }
         }
 
         private void HandleMessage(PasswordRequestMessage message)

@@ -12,7 +12,7 @@ namespace FxSsh.Services
             AuthMethod = "none";
             Username = username!;
             Session = session!;
-            Result = true;
+            Result = false; // Application must explicitly allow anonymous
         }
 
         public UserAuthArgs(Session session, string username, string keyAlgorithm, string fingerprint, byte[] key)

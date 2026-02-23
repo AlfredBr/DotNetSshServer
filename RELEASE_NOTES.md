@@ -1,5 +1,27 @@
 # Release Notes
 
+## 2026-02-22 (11)
+
+### Added
+- **Public key authentication**:
+  - `AuthorizedKeysPath` config option for authorized_keys file
+  - Supports ssh-rsa, ssh-ed25519, ecdsa-sha2-nistp256/384/521
+  - Standard OpenSSH authorized_keys format
+- **Anonymous access control**:
+  - `AllowAnonymous` config option (default: true for dev)
+  - Set to false in production to require authentication
+- **AuthorizedKeysStore** class for parsing and validating public keys
+- **New commands**:
+  - `config`: Display current server configuration
+  - `whoami`: Now shows username, auth method, and key fingerprint
+
+### Changed
+- Anonymous auth now fires UserAuth event (previously auto-accepted)
+- UserAuthArgs.Result defaults to false for anonymous (must be explicitly allowed)
+- CommandHandler now receives ConnectionInfo and SshServerOptions
+
+---
+
 ## 2026-02-22 (10)
 
 ### Changed

@@ -3,17 +3,29 @@ using Spectre.Console;
 namespace SshServer.Host.Tui;
 
 /// <summary>
+/// Information about the authenticated connection.
+/// </summary>
+public record ConnectionInfo(
+    string ConnectionId,
+    string Username,
+    string AuthMethod,
+    string? KeyFingerprint = null
+);
+
+/// <summary>
 /// Processes shell commands and renders output using Spectre.Console.
 /// </summary>
 public class CommandHandler
 {
     private readonly IAnsiConsole _console;
-    private readonly string _connId;
+    private readonly ConnectionInfo _connInfo;
+    private readonly SshServerOptions _options;
 
-    public CommandHandler(IAnsiConsole console, string connId)
+    public CommandHandler(IAnsiConsole console, ConnectionInfo connInfo, SshServerOptions options)
     {
         _console = console;
-        _connId = connId;
+        _connInfo = connInfo;
+        _options = options;
     }
 
     /// <summary>
@@ -40,7 +52,11 @@ public class CommandHandler
                     break;
 
                 case "whoami":
-                    _console.MarkupLine($"Connection ID: [yellow]{_connId}[/]");
+                    ShowWhoami();
+                    break;
+
+                case "config":
+                    ShowConfig();
                     break;
 
                 case "clear":
@@ -119,7 +135,8 @@ public class CommandHandler
 
         table.AddRow("help", "Show this help message");
         table.AddRow("status", "Show server status");
-        table.AddRow("whoami", "Show your connection ID");
+        table.AddRow("whoami", "Show connection and auth info");
+        table.AddRow("config", "Show server configuration");
         table.AddRow("clear", "Clear the screen");
         table.AddRow("[yellow]menu[/]", "[yellow]Interactive menu selection[/]");
         table.AddRow("[yellow]select[/]", "[yellow]Select from a list[/]");
@@ -152,6 +169,55 @@ public class CommandHandler
         _console.Write(panel);
     }
 
+    private void ShowWhoami()
+    {
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .HideHeaders()
+            .AddColumn("Property")
+            .AddColumn("Value");
+
+        table.AddRow("Connection ID", $"[yellow]{_connInfo.ConnectionId}[/]");
+        table.AddRow("Username", $"[blue]{Markup.Escape(_connInfo.Username)}[/]");
+
+        if (_connInfo.AuthMethod == "none")
+        {
+            table.AddRow("Auth Method", "[dim]anonymous[/]");
+        }
+        else if (_connInfo.AuthMethod == "publickey")
+        {
+            table.AddRow("Auth Method", "[green]public key[/]");
+            if (_connInfo.KeyFingerprint != null)
+            {
+                table.AddRow("Key Fingerprint", $"[dim]{Markup.Escape(_connInfo.KeyFingerprint)}[/]");
+            }
+        }
+        else
+        {
+            table.AddRow("Auth Method", Markup.Escape(_connInfo.AuthMethod));
+        }
+
+        _console.Write(table);
+    }
+
+    private void ShowConfig()
+    {
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumn("[blue]Setting[/]")
+            .AddColumn("[blue]Value[/]");
+
+        table.AddRow("Port", _options.Port.ToString());
+        table.AddRow("Banner", Markup.Escape(_options.Banner));
+        table.AddRow("HostKeyPath", Markup.Escape(_options.HostKeyPath));
+        table.AddRow("MaxConnections", _options.MaxConnections.ToString());
+        table.AddRow("LogLevel", _options.LogLevel);
+        table.AddRow("AllowAnonymous", _options.AllowAnonymous ? "[green]true[/]" : "[red]false[/]");
+        table.AddRow("AuthorizedKeysPath", _options.AuthorizedKeysPath ?? "[dim](not set)[/]");
+
+        _console.Write(table);
+    }
+
     private void ShowMenu()
     {
         var choice = _console.Prompt(
@@ -171,7 +237,7 @@ public class CommandHandler
                 ShowStatus();
                 break;
             case "Show connection info":
-                _console.MarkupLine($"Connection ID: [yellow]{_connId}[/]");
+                ShowWhoami();
                 break;
             case "Clear screen":
                 _console.Clear();

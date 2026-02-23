@@ -13,7 +13,7 @@ using SshServer.Host.Tui;
 // ── configuration ──────────────────────────────────────────────────────────────
 
 var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
+    .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
     .AddEnvironmentVariables("SSHSERVER_")
     .AddCommandLine(args)
@@ -60,6 +60,33 @@ AppDomain.CurrentDomain.ProcessExit += (_, _) =>
         cts.Cancel();
     }
 };
+
+// ── authentication setup ──────────────────────────────────────────────────────
+
+var authorizedKeys = new AuthorizedKeysStore(logger);
+
+if (!string.IsNullOrEmpty(options.AuthorizedKeysPath))
+{
+    // Resolve relative paths against the application directory
+    var keysPath = Path.IsPathRooted(options.AuthorizedKeysPath)
+        ? options.AuthorizedKeysPath
+        : Path.Combine(AppContext.BaseDirectory, options.AuthorizedKeysPath);
+    authorizedKeys.LoadFromFile(keysPath);
+}
+
+// Log authentication mode
+if (options.AllowAnonymous)
+{
+    logger.LogInformation("Anonymous access enabled (AllowAnonymous=true)");
+}
+else if (authorizedKeys.Count == 0)
+{
+    logger.LogWarning("AllowAnonymous=false but no authorized keys loaded - all connections will be rejected");
+}
+else
+{
+    logger.LogInformation("Public key authentication required ({Count} keys loaded)", authorizedKeys.Count);
+}
 
 // ── server startup ─────────────────────────────────────────────────────────────
 
@@ -120,14 +147,64 @@ string FormatByte(byte b) => b switch
 void OnConnectionAccepted(object? sender, Session session)
 {
     var connId = GenerateConnectionId(session);
+    var connInfo = new ConnectionInfo(connId);
     logger.LogInformation("[{ConnId}] Connection accepted", connId);
 
-    session.ServiceRegistered += (_, service) => OnServiceRegistered(service, connId);
+    session.ServiceRegistered += (_, service) => OnServiceRegistered(service, connId, connInfo);
     session.Disconnected += (_, _) => logger.LogInformation("[{ConnId}] Disconnected", connId);
 }
 
-void OnServiceRegistered(SshService service, string connId)
+void OnServiceRegistered(SshService service, string connId, ConnectionInfo connInfo)
 {
+    // Handle authentication service
+    if (service is UserAuthService authService)
+    {
+        authService.UserAuth += (_, args) =>
+        {
+            switch (args.AuthMethod)
+            {
+                case "none":
+                    // Anonymous access
+                    if (options.AllowAnonymous)
+                    {
+                        logger.LogInformation("[{ConnId}] Anonymous auth accepted for user '{User}'", connId, args.Username);
+                        args.Result = true;
+                        connInfo.SetAuth(args.Username, "none", null);
+                    }
+                    else
+                    {
+                        logger.LogDebug("[{ConnId}] Anonymous auth rejected for user '{User}'", connId, args.Username);
+                        args.Result = false;
+                    }
+                    break;
+
+                case "publickey":
+                    // Public key authentication
+                    if (args.Key != null && authorizedKeys.IsAuthorized(args.KeyAlgorithm!, args.Key))
+                    {
+                        logger.LogInformation("[{ConnId}] Public key auth accepted for user '{User}' ({KeyType})",
+                            connId, args.Username, args.KeyAlgorithm);
+                        args.Result = true;
+                        connInfo.SetAuth(args.Username, "publickey", args.Fingerprint);
+                    }
+                    else
+                    {
+                        logger.LogDebug("[{ConnId}] Public key auth rejected for user '{User}' ({KeyType}, fingerprint: {Fingerprint})",
+                            connId, args.Username, args.KeyAlgorithm, args.Fingerprint);
+                        args.Result = false;
+                    }
+                    break;
+
+                default:
+                    logger.LogDebug("[{ConnId}] Unsupported auth method '{Method}' for user '{User}'",
+                        connId, args.AuthMethod, args.Username);
+                    args.Result = false;
+                    break;
+            }
+        };
+        return;
+    }
+
     if (service is not ConnectionService connection)
         return;
 
@@ -151,13 +228,13 @@ void OnServiceRegistered(SshService service, string connId)
 
     connection.CommandOpened += (_, e) =>
     {
-        consoleOutput = OnCommandOpened(e, connId, termWidth, termHeight);
+        consoleOutput = OnCommandOpened(e, connInfo, termWidth, termHeight);
     };
 }
 
-SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int termWidth, int termHeight)
+SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo connInfo, int termWidth, int termHeight)
 {
-    logger.LogInformation("[{ConnId}] Shell: {ShellType}", connId, e.ShellType);
+    logger.LogInformation("[{ConnId}] Shell: {ShellType}", connInfo.ConnectionId, e.ShellType);
 
     if (e.ShellType != "shell")
         return null;
@@ -173,14 +250,14 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
     var ctx = SshConsoleFactory.Create(channel, termWidth, termHeight);
     var consoleOutput = ctx.Output;
     var consoleInput = ctx.Input;
-    var commandHandler = new CommandHandler(ctx.Console, connId);
+    var commandHandler = new CommandHandler(ctx.Console, connInfo.ToRecord(), options);
 
     // Create line editor
     var lineEditor = new LineEditor(data => channel.SendData(data))
     {
         Completions =
         [
-            "help", "status", "whoami", "clear", "menu", "select",
+            "help", "status", "whoami", "config", "clear", "menu", "select",
             "multi", "confirm", "ask", "demo", "progress", "spinner",
             "live", "tree", "chart", "quit", "exit"
         ]
@@ -188,7 +265,7 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
 
     void Disconnect()
     {
-        logger.LogInformation("[{ConnId}] Disconnecting", connId);
+        logger.LogInformation("[{ConnId}] Disconnecting", connInfo.ConnectionId);
         channel.SendData("\r\nGoodbye!\r\n"u8.ToArray());
         channel.SendEof();
         channel.SendClose(0);
@@ -209,7 +286,7 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
 
         foreach (var b in data)
         {
-            logger.LogTrace("[{ConnId}] Char: {Char}", connId, FormatByte(b));
+            logger.LogTrace("[{ConnId}] Char: {Char}", connInfo.ConnectionId, FormatByte(b));
 
             var result = lineEditor.ProcessByte(b);
 
@@ -221,7 +298,7 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
 
                 case LineEditorResult.LineSubmitted:
                     var command = lineEditor.SubmittedLine;
-                    logger.LogDebug("[{ConnId}] Command: {Command}", connId, command);
+                    logger.LogDebug("[{ConnId}] Command: {Command}", connInfo.ConnectionId, command);
 
                     // Execute command asynchronously to allow input routing during prompts
                     inPromptMode = true;
@@ -253,9 +330,32 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, string connId, int
 
     channel.CloseReceived += (_, _) =>
     {
-        logger.LogInformation("[{ConnId}] Channel closed by client", connId);
+        logger.LogInformation("[{ConnId}] Channel closed by client", connInfo.ConnectionId);
         channel.SendClose(0);
     };
 
     return consoleOutput;
+}
+
+// ── types ─────────────────────────────────────────────────────────────────────
+
+/// <summary>
+/// Mutable connection info populated during authentication.
+/// </summary>
+class ConnectionInfo(string connectionId)
+{
+    public string ConnectionId { get; } = connectionId;
+    public string Username { get; private set; } = "unknown";
+    public string AuthMethod { get; private set; } = "none";
+    public string? KeyFingerprint { get; private set; }
+
+    public void SetAuth(string username, string authMethod, string? fingerprint)
+    {
+        Username = username;
+        AuthMethod = authMethod;
+        KeyFingerprint = fingerprint;
+    }
+
+    public SshServer.Host.Tui.ConnectionInfo ToRecord() =>
+        new(ConnectionId, Username, AuthMethod, KeyFingerprint);
 }

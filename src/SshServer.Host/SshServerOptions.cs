@@ -34,4 +34,16 @@ public class SshServerOptions
     /// Minimum log level. Default: "Debug".
     /// </summary>
     public string LogLevel { get; set; } = "Debug";
+
+    /// <summary>
+    /// Allow anonymous connections (no authentication required).
+    /// Default: true for development, set to false in production.
+    /// </summary>
+    public bool AllowAnonymous { get; set; } = true;
+
+    /// <summary>
+    /// Path to authorized_keys file for public key authentication.
+    /// If not set or file doesn't exist, public key auth is disabled.
+    /// </summary>
+    public string? AuthorizedKeysPath { get; set; }
 }

@@ -67,6 +67,7 @@ namespace FxSsh
             _keyExchangeAlgorithms.Add("diffie-hellman-group16-sha512", () => new DiffieHellmanKex(512, 4096));
             _keyExchangeAlgorithms.Add("diffie-hellman-group14-sha256", () => new DiffieHellmanKex(256, 2048));
 
+            _publicKeyAlgorithms.Add("ssh-ed25519", x => new Ed25519Key(x));
             _publicKeyAlgorithms.Add("ecdsa-sha2-nistp256", x => new EcdsaKey("nistp256", x));
             _publicKeyAlgorithms.Add("ecdsa-sha2-nistp384", x => new EcdsaKey("nistp384", x));
             _publicKeyAlgorithms.Add("ecdsa-sha2-nistp521", x => new EcdsaKey("nistp521", x));
@@ -538,6 +539,7 @@ namespace FxSsh
                 case "rsa-sha2-512":
                     message = Message.LoadFrom<KeyExchangeDhInitMessage>(message);
                     break;
+                case "ssh-ed25519":
                 case "ecdsa-sha2-nistp256":
                 case "ecdsa-sha2-nistp384":
                 case "ecdsa-sha2-nistp521":
