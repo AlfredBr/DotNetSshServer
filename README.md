@@ -3,6 +3,21 @@
 A lightweight SSH server library in C# (.NET 10) that allows terminal clients to connect
 via SSH and interact with a TUI application. Inspired by charmbracelet's [wish](https://github.com/charmbracelet/wish) package in Go.
 
+## Project Structure
+
+| Project | Description |
+|---------|-------------|
+| **SshServer.Core** | The SSH server library — handles connections, authentication, PTY, and channels. Use this as a dependency for your own SSH-based applications. |
+| **SshServer.Host** | A demo application showcasing the library's capabilities. Use this as a starting point for building your own SSH TUI programs. |
+
+The demo application (`SshServer.Host`) demonstrates:
+- Spectre.Console integration for rich terminal output
+- Interactive prompts and live displays
+- Line editing with history and tab completion
+- Public key and anonymous authentication
+
+To build your own SSH TUI application, copy `SshServer.Host` as a template and replace the `CommandHandler` with your own application logic.
+
 ## Features
 
 ### Authentication
