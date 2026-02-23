@@ -302,7 +302,7 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 
 This project builds upon the work of several excellent open source projects:
 
-- **[FxSsh](https://github.com/Aimeast/FxSsh)** by Aimeast — The core SSH protocol implementation. Source is vendored and modernised for .NET 10.
+- **[FxSsh](https://github.com/Aimeast/FxSsh)** by Aimeast — The core SSH protocol implementation. Source is vendored (copied into this repo rather than referenced as a package) and modernised for .NET 10.
 - **[Spectre.Console](https://github.com/spectreconsole/spectre.console)** by Patrik Svensson — Beautiful console rendering, tables, prompts, and live displays.
 - **[NSec.Cryptography](https://github.com/ektrah/nsec)** by ektrah — Modern cryptographic library providing Ed25519 support.
 - **[Wish](https://github.com/charmbracelet/wish)** by Charmbracelet — Inspiration for building SSH-based TUI applications (Go implementation).
