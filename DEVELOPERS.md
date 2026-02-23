@@ -6,71 +6,50 @@ This guide explains how to use this project as a foundation for building your ow
 
 ```
 src/
-├── SshServer.Core/           # SSH protocol library (reusable)
+├── SshServer.Core/               # SSH protocol library (reusable)
 │   ├── Ssh/
-│   │   ├── Algorithms/       # Crypto: ECDSA, Ed25519, RSA, AES, HMAC
-│   │   ├── Messages/         # SSH protocol messages
-│   │   ├── Services/         # Auth, Connection, Channel management
-│   │   ├── Session.cs        # Main session handler
-│   │   └── SshServer.cs      # TCP listener and connection acceptor
-│   └── HostKeyStore.cs       # Host key generation and loading
+│   │   ├── Algorithms/           # Crypto: ECDSA, Ed25519, RSA, AES, HMAC
+│   │   ├── Messages/             # SSH protocol messages
+│   │   ├── Services/             # Auth, Connection, Channel management
+│   │   ├── Session.cs            # Main session handler
+│   │   └── SshServer.cs          # TCP listener and connection acceptor
+│   └── HostKeyStore.cs           # Host key generation and loading
 │
-└── SshServer.Host/           # Demo application (copy this)
-    ├── Program.cs            # Entry point and event wiring
-    ├── SshServerOptions.cs   # Configuration model
-    ├── AuthorizedKeysStore.cs # Public key authentication
+└── SshServer.Host/               # Demo application (use as template)
+    ├── Program.cs                # Server startup and event wiring
+    ├── SshShellApplication.cs    # Abstract base class for applications
+    ├── DemoApp.cs                # Demo implementation
+    ├── SshServerOptions.cs       # Configuration model
+    ├── AuthorizedKeysStore.cs    # Public key authentication
     └── Tui/
-        ├── CommandHandler.cs     # Your application logic goes here
         ├── LineEditor.cs         # Terminal line editing
         ├── SshConsoleFactory.cs  # Creates Spectre.Console per connection
-        ├── SshAnsiConsoleInput.cs    # Routes SSH input to Spectre
-        ├── SshAnsiConsoleOutput.cs   # Routes Spectre output to SSH
-        └── SshTextWriter.cs      # CRLF translation for SSH
+        └── ...                   # Other TUI infrastructure
 ```
 
 ## Quick Start: Create Your Own Application
 
-### Step 1: Copy the Demo Project
+### Step 1: Inherit from SshShellApplication
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/sshserver.git
-cd sshserver
-
-# Copy the demo as your starting point
-cp -r src/SshServer.Host src/MyApp.Host
-
-# Update the project file
-mv src/MyApp.Host/SshServer.Host.csproj src/MyApp.Host/MyApp.Host.csproj
-```
-
-Edit `MyApp.Host.csproj`:
-```xml
-<RootNamespace>MyApp.Host</RootNamespace>
-<AssemblyName>MyApp.Host</AssemblyName>
-```
-
-### Step 2: Implement Your Command Handler
-
-The `CommandHandler` class is where your application logic lives. Replace it with your own:
+Create a new class that inherits from `SshShellApplication`:
 
 ```csharp
-// Tui/CommandHandler.cs
-public class CommandHandler
-{
-    private readonly IAnsiConsole _console;
-    private readonly ConnectionInfo _connInfo;
+using SshServer.Host;
 
-    public CommandHandler(IAnsiConsole console, ConnectionInfo connInfo, MyAppOptions options)
+public class MyApp : SshShellApplication
+{
+    protected override string Prompt => "myapp> ";
+
+    protected override IEnumerable<string> Completions =>
+        ["help", "greet", "quit"];
+
+    protected override void OnWelcome()
     {
-        _console = console;
-        _connInfo = connInfo;
+        WriteLine("[bold green]Welcome to MyApp![/]");
+        WriteLine("Type [blue]help[/] for commands.");
     }
 
-    /// <summary>
-    /// Execute a command. Return false to disconnect the session.
-    /// </summary>
-    public bool Execute(string command)
+    protected override bool OnCommand(string command)
     {
         var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0) return true;
@@ -78,257 +57,169 @@ public class CommandHandler
         switch (parts[0].ToLowerInvariant())
         {
             case "help":
-                ShowHelp();
+                WriteLine("[blue]Commands:[/] help, greet, quit");
+                break;
+
+            case "greet":
+                var name = Ask("What's your name?");
+                WriteLine($"Hello, [green]{Escape(name)}[/]!");
                 break;
 
             case "quit":
-            case "exit":
                 return false; // Disconnect
 
             default:
-                _console.MarkupLine($"[red]Unknown command:[/] {Markup.Escape(parts[0])}");
+                WriteLine($"[red]Unknown:[/] {Escape(parts[0])}");
                 break;
         }
 
         return true; // Continue session
     }
-
-    private void ShowHelp()
-    {
-        _console.MarkupLine("[blue]Available commands:[/]");
-        _console.MarkupLine("  help  - Show this message");
-        _console.MarkupLine("  quit  - Disconnect");
-    }
-
-    public void ShowWelcome()
-    {
-        _console.MarkupLine("[green]Welcome to MyApp![/]");
-        _console.MarkupLine("Type [blue]help[/] for commands.");
-    }
 }
 ```
 
-### Step 3: Update Tab Completions
+### Step 2: Register Your Application
 
-In `Program.cs`, update the completions list to match your commands:
+In `Program.cs`, replace `DemoApp` with your class:
 
 ```csharp
-var lineEditor = new LineEditor(data => channel.SendData(data))
-{
-    Completions = ["help", "status", "quit", "exit"]  // Your commands
-};
+// In OnCommandOpened method:
+var app = new MyApp();  // Changed from DemoApp
+app.Run(channel, consoleContext, connInfo.ToRecord(), options, Disconnect, updateActivity, logger);
 ```
 
-### Step 4: Run Your Application
+### Step 3: Run
 
 ```bash
-dotnet run --project src/MyApp.Host/MyApp.Host.csproj
-```
-
-Connect:
-```bash
+dotnet run --project src/SshServer.Host/SshServer.Host.csproj
 ssh -p 2222 localhost
 ```
 
-## Key Extension Points
+## SshShellApplication Reference
 
-### Custom Authentication
+### Abstract Members (must override)
 
-To add custom authentication logic, modify the `UserAuth` event handler in `Program.cs`:
+| Member | Description |
+|--------|-------------|
+| `OnCommand(string command)` | Handle user commands. Return `false` to disconnect. |
+
+### Virtual Members (optional overrides)
+
+| Member | Default | Description |
+|--------|---------|-------------|
+| `Prompt` | `"> "` | The prompt string shown before input |
+| `Completions` | `[]` | Command names for tab completion |
+| `OnWelcome()` | Basic message | Called to display welcome message |
+| `OnConnect()` | Empty | Called when connection established |
+| `OnDisconnect()` | Empty | Called when session ends |
+
+### Built-in Properties
+
+| Property | Description |
+|----------|-------------|
+| `Console` | The `IAnsiConsole` for advanced Spectre.Console rendering |
+| `Connection` | Connection info (ID, username, auth method, fingerprint) |
+| `Options` | Server configuration options |
+
+### Built-in Helper Methods
+
+| Method | Description |
+|--------|-------------|
+| `WriteLine(markup)` | Write a line with Spectre markup |
+| `Write(markup)` | Write without newline |
+| `Write(renderable)` | Write a Table, Panel, Tree, etc. |
+| `Clear()` | Clear the screen |
+| `Ask(prompt)` | Get text input from user |
+| `Ask<T>(prompt)` | Get typed input from user |
+| `Confirm(prompt)` | Get yes/no confirmation |
+| `Select(title, choices)` | Single selection prompt |
+| `MultiSelect(title, choices)` | Multi-selection prompt |
+| `Status(message, work)` | Show spinner while working |
+| `Progress(work)` | Show progress bars |
+| `Disconnect(message)` | Programmatically disconnect |
+| `Escape(text)` | Escape text for safe markup |
+
+## Examples
+
+### Interactive Menu Application
 
 ```csharp
-authService.UserAuth += (_, args) =>
+public class MenuApp : SshShellApplication
 {
-    switch (args.AuthMethod)
+    protected override bool OnCommand(string command)
     {
-        case "publickey":
-            // Custom public key validation
-            args.Result = MyAuthService.ValidateKey(args.Username, args.Key);
-            break;
-
-        case "password":
-            // Password authentication (if implemented)
-            args.Result = MyAuthService.ValidatePassword(args.Username, args.Password);
-            break;
-
-        case "none":
-            // Anonymous access
-            args.Result = options.AllowAnonymous;
-            break;
+        // Ignore typed commands, use menu instead
+        ShowMainMenu();
+        return true;
     }
-};
-```
 
-### Interactive Prompts
-
-Use Spectre.Console prompts for interactive input:
-
-```csharp
-// Selection prompt
-var choice = _console.Prompt(
-    new SelectionPrompt<string>()
-        .Title("Select an option:")
-        .AddChoices(["Option 1", "Option 2", "Option 3"]));
-
-// Text input
-var name = _console.Ask<string>("Enter your name:");
-
-// Confirmation
-var confirmed = _console.Confirm("Are you sure?");
-
-// Multi-select
-var items = _console.Prompt(
-    new MultiSelectionPrompt<string>()
-        .Title("Select items:")
-        .AddChoices(["Item A", "Item B", "Item C"]));
-```
-
-### Rich Output
-
-```csharp
-// Tables
-var table = new Table()
-    .AddColumn("Name")
-    .AddColumn("Value");
-table.AddRow("Status", "[green]Active[/]");
-_console.Write(table);
-
-// Panels
-var panel = new Panel("Content here")
-{
-    Header = new PanelHeader("Title"),
-    Border = BoxBorder.Rounded
-};
-_console.Write(panel);
-
-// Progress bars
-_console.Progress().Start(ctx =>
-{
-    var task = ctx.AddTask("Processing...");
-    while (!ctx.IsFinished)
+    protected override void OnWelcome()
     {
-        task.Increment(10);
-        Thread.Sleep(100);
+        ShowMainMenu();
     }
-});
 
-// Trees
-var tree = new Tree("Root");
-tree.AddNode("Child 1").AddNode("Grandchild");
-tree.AddNode("Child 2");
-_console.Write(tree);
-```
+    private void ShowMainMenu()
+    {
+        while (true)
+        {
+            var choice = Select("Main Menu", new[]
+            {
+                "View Status",
+                "Settings",
+                "Exit"
+            });
 
-### Per-Connection State
+            switch (choice)
+            {
+                case "View Status":
+                    WriteLine("[green]System OK[/]");
+                    break;
+                case "Settings":
+                    ShowSettings();
+                    break;
+                case "Exit":
+                    return;
+            }
+        }
+    }
 
-Each SSH connection gets its own instances of `CommandHandler`, `LineEditor`, and `IAnsiConsole`. Store per-connection state in your `CommandHandler`:
-
-```csharp
-public class CommandHandler
-{
-    private readonly Dictionary<string, object> _sessionData = new();
-
-    public void SetData(string key, object value) => _sessionData[key] = value;
-    public T? GetData<T>(string key) => _sessionData.TryGetValue(key, out var v) ? (T)v : default;
+    private void ShowSettings()
+    {
+        var options = MultiSelect("Enable features:",
+            new[] { "Logging", "Metrics", "Alerts" });
+        WriteLine($"Enabled: {string.Join(", ", options)}");
+    }
 }
 ```
-
-### Configuration
-
-Add custom settings to `SshServerOptions.cs`:
-
-```csharp
-public class MyAppOptions : SshServerOptions
-{
-    public string DatabaseConnectionString { get; set; } = "";
-    public int MaxItemsPerPage { get; set; } = 20;
-}
-```
-
-## Architecture Deep Dive
-
-### Connection Lifecycle
-
-```
-1. TCP connection accepted
-   └── Session created
-       └── SSH handshake (key exchange, encryption)
-           └── Authentication (UserAuth event)
-               └── Shell channel opened (CommandOpened event)
-                   └── Your CommandHandler receives input
-                       └── LineEditor handles line editing
-                           └── Commands executed
-                               └── Spectre.Console renders output
-```
-
-### Event Flow
-
-| Event | Source | Description |
-|-------|--------|-------------|
-| `ConnectionAccepted` | SshServer | New TCP connection |
-| `ServiceRegistered` | Session | Auth or connection service ready |
-| `UserAuth` | UserAuthService | Authentication request |
-| `PtyReceived` | ConnectionService | Terminal dimensions |
-| `WindowChange` | ConnectionService | Terminal resized |
-| `CommandOpened` | ConnectionService | Shell channel ready |
-| `DataReceived` | Channel | Input from client |
-| `CloseReceived` | Channel | Client disconnecting |
-
-### Thread Safety
-
-- Each connection runs on its own thread
-- `CommandHandler.Execute()` is called from a background task
-- Spectre.Console prompts block the input thread during interaction
-- The `inPromptMode` flag routes input appropriately
-
-## Common Patterns
 
 ### Database-Backed Application
 
 ```csharp
-public class CommandHandler
+public class DbApp : SshShellApplication
 {
     private readonly IDbConnection _db;
 
-    public CommandHandler(IAnsiConsole console, ConnectionInfo connInfo, IDbConnection db)
+    public DbApp(IDbConnection db)
     {
         _db = db;
     }
 
-    public bool Execute(string command)
+    protected override bool OnCommand(string command)
     {
         if (command == "users")
         {
-            var users = _db.Query<User>("SELECT * FROM Users");
-            var table = new Table().AddColumn("Name").AddColumn("Email");
+            var users = _db.Query<User>("SELECT * FROM Users LIMIT 10");
+
+            var table = new Table()
+                .AddColumn("Name")
+                .AddColumn("Email");
+
             foreach (var user in users)
                 table.AddRow(user.Name, user.Email);
-            _console.Write(table);
+
+            Write(table);
         }
         return true;
-    }
-}
-```
-
-### Menu-Driven Application
-
-```csharp
-public bool Execute(string command)
-{
-    while (true)
-    {
-        var choice = _console.Prompt(
-            new SelectionPrompt<string>()
-                .Title("Main Menu")
-                .AddChoices(["View Items", "Add Item", "Settings", "Exit"]));
-
-        switch (choice)
-        {
-            case "View Items": ViewItems(); break;
-            case "Add Item": AddItem(); break;
-            case "Settings": Settings(); break;
-            case "Exit": return false;
-        }
     }
 }
 ```
@@ -336,58 +227,99 @@ public bool Execute(string command)
 ### Long-Running Operations
 
 ```csharp
-public bool Execute(string command)
+protected override bool OnCommand(string command)
 {
     if (command == "process")
     {
-        _console.Status()
-            .Spinner(Spinner.Known.Dots)
-            .Start("Processing...", ctx =>
-            {
-                // Long operation here
-                Thread.Sleep(3000);
-            });
-        _console.MarkupLine("[green]Done![/]");
+        Status("[yellow]Processing...[/]", () =>
+        {
+            Thread.Sleep(3000); // Simulated work
+        });
+        WriteLine("[green]Done![/]");
     }
+
+    if (command == "batch")
+    {
+        Progress(ctx =>
+        {
+            var task = ctx.AddTask("Processing items");
+            for (int i = 0; i < 100; i++)
+            {
+                task.Increment(1);
+                Thread.Sleep(50);
+            }
+        });
+    }
+
     return true;
 }
+```
+
+## Configuration
+
+Settings in `appsettings.json`:
+
+```json
+{
+  "SshServer": {
+    "Port": 2222,
+    "Banner": "SSH-2.0-MyApp",
+    "HostKeyPath": "hostkey.pem",
+    "MaxConnections": 100,
+    "LogLevel": "Information",
+    "AllowAnonymous": false,
+    "AuthorizedKeysPath": "./authorized_keys",
+    "SessionTimeoutMinutes": 30
+  }
+}
+```
+
+## Authentication
+
+### Anonymous Access
+
+Set `AllowAnonymous: true` in config. Good for dev/demo.
+
+### Public Key Authentication
+
+1. Create `authorized_keys` file with OpenSSH public keys:
+   ```
+   ssh-ed25519 AAAA... user@host
+   ssh-rsa AAAA... another@host
+   ```
+
+2. Set `AllowAnonymous: false` and `AuthorizedKeysPath` in config.
+
+### Custom Authentication
+
+Modify the `UserAuth` event handler in `Program.cs`:
+
+```csharp
+authService.UserAuth += (_, args) =>
+{
+    if (args.AuthMethod == "publickey")
+    {
+        // Custom validation
+        args.Result = MyAuthService.ValidateKey(args.Username, args.Key);
+    }
+};
 ```
 
 ## Troubleshooting
 
 ### Input Not Working in Prompts
 
-Ensure the `inPromptMode` flag is set before executing commands:
-
-```csharp
-inPromptMode = true;
-Task.Run(() =>
-{
-    try { commandHandler.Execute(command); }
-    finally { inPromptMode = false; }
-});
-```
+The base class handles input routing automatically. If you're using raw `Console` access, ensure you're in the right mode.
 
 ### Terminal Display Issues
 
-- Ensure PTY dimensions are passed to `SshConsoleFactory.Create()`
-- Handle `WindowChange` events to update console size
-- Use `\r\n` for line endings (handled by `SshTextWriter`)
+- The base class handles PTY setup automatically
+- Use `\r\n` for line endings (handled by built-in methods)
+- Test with different terminal sizes
 
-### Authentication Failures
+### Session Timeout
 
-- Check `authorized_keys` file format (OpenSSH format)
-- Verify file path resolution (relative to executable, not working directory)
-- Enable `Trace` logging to see authentication details
-
-## Dependencies
-
-| Package | Purpose | Required |
-|---------|---------|----------|
-| `SshServer.Core` | SSH protocol | Yes |
-| `Spectre.Console` | TUI rendering | Recommended |
-| `Microsoft.Extensions.Hosting` | Configuration | Optional |
-| `Microsoft.Extensions.Logging` | Logging | Optional |
+Set `SessionTimeoutMinutes: 0` to disable, or increase the value for longer sessions.
 
 ## License
 

@@ -1,126 +1,111 @@
 using Spectre.Console;
 
-namespace SshServer.Host.Tui;
+namespace SshServer.Host;
 
 /// <summary>
-/// Information about the authenticated connection.
+/// Demo SSH shell application showcasing Spectre.Console features.
+/// Use this as a reference for building your own SSH applications.
 /// </summary>
-public record ConnectionInfo(
-    string ConnectionId,
-    string Username,
-    string AuthMethod,
-    string? KeyFingerprint = null
-);
-
-/// <summary>
-/// Processes shell commands and renders output using Spectre.Console.
-/// </summary>
-public class CommandHandler
+public class DemoApp : SshShellApplication
 {
-    private readonly IAnsiConsole _console;
-    private readonly ConnectionInfo _connInfo;
-    private readonly SshServerOptions _options;
+    protected override string Prompt => "demo> ";
 
-    public CommandHandler(IAnsiConsole console, ConnectionInfo connInfo, SshServerOptions options)
+    protected override IEnumerable<string> Completions =>
+    [
+        "help", "status", "whoami", "config", "clear",
+        "menu", "select", "multi", "confirm", "ask", "demo",
+        "progress", "spinner", "live", "tree", "chart",
+        "quit", "exit"
+    ];
+
+    protected override void OnWelcome()
     {
-        _console = console;
-        _connInfo = connInfo;
-        _options = options;
+        Console.Write(new Rule("[green]Welcome to SshServer[/]").RuleStyle("dim"));
+        WriteLine("Type [blue]help[/] for available commands.");
     }
 
-    /// <summary>
-    /// Execute a command and render output.
-    /// </summary>
-    /// <returns>True if the session should continue, false to disconnect.</returns>
-    public bool Execute(string command)
+    protected override bool OnCommand(string command)
     {
         var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 0)
             return true;
 
-        try
+        switch (parts[0].ToLowerInvariant())
         {
-            switch (parts[0].ToLowerInvariant())
-            {
-                case "help":
-                case "?":
-                    ShowHelp();
-                    break;
+            case "help":
+            case "?":
+                ShowHelp();
+                break;
 
-                case "status":
-                    ShowStatus();
-                    break;
+            case "status":
+                ShowStatus();
+                break;
 
-                case "whoami":
-                    ShowWhoami();
-                    break;
+            case "whoami":
+                ShowWhoami();
+                break;
 
-                case "config":
-                    ShowConfig();
-                    break;
+            case "config":
+                ShowConfig();
+                break;
 
-                case "clear":
-                case "cls":
-                    _console.Clear();
-                    break;
+            case "clear":
+            case "cls":
+                Clear();
+                break;
 
-                case "menu":
-                    ShowMenu();
-                    break;
+            case "menu":
+                ShowMenu();
+                break;
 
-                case "select":
-                    ShowSelect();
-                    break;
+            case "select":
+                ShowSelect();
+                break;
 
-                case "multi":
-                    ShowMultiSelect();
-                    break;
+            case "multi":
+                ShowMultiSelect();
+                break;
 
-                case "confirm":
-                    ShowConfirm();
-                    break;
+            case "confirm":
+                ShowConfirm();
+                break;
 
-                case "ask":
-                    ShowAsk();
-                    break;
+            case "ask":
+                ShowAsk();
+                break;
 
-                case "demo":
-                    ShowDemo();
-                    break;
+            case "demo":
+                ShowDemo();
+                break;
 
-                case "progress":
-                    ShowProgress();
-                    break;
+            case "progress":
+                ShowProgress();
+                break;
 
-                case "spinner":
-                    ShowSpinner();
-                    break;
+            case "spinner":
+                ShowSpinner();
+                break;
 
-                case "live":
-                    ShowLive();
-                    break;
+            case "live":
+                ShowLive();
+                break;
 
-                case "tree":
-                    ShowTree();
-                    break;
+            case "tree":
+                ShowTree();
+                break;
 
-                case "chart":
-                    ShowBarChart();
-                    break;
+            case "chart":
+                ShowBarChart();
+                break;
 
-                case "quit":
-                case "exit":
-                    return false;
+            case "quit":
+            case "exit":
+                return false;
 
-                default:
-                    _console.MarkupLine($"[red]Unknown command:[/] {Markup.Escape(parts[0])}");
-                    _console.MarkupLine("[dim]Type 'help' for available commands.[/]");
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            _console.MarkupLine($"[red]Error:[/] {Markup.Escape(ex.Message)}");
+            default:
+                WriteLine($"[red]Unknown command:[/] {Escape(parts[0])}");
+                WriteLine("[dim]Type 'help' for available commands.[/]");
+                break;
         }
 
         return true;
@@ -152,8 +137,8 @@ public class CommandHandler
         table.AddRow("quit", "Disconnect from server");
         table.AddRow("[dim]Ctrl-C[/]", "[dim]Disconnect (shortcut)[/]");
 
-        _console.Write(table);
-        _console.MarkupLine("\n[dim]Yellow = interactive prompts, Green = live displays[/]");
+        Write(table);
+        WriteLine("\n[dim]Yellow = interactive prompts, Green = live displays[/]");
     }
 
     private void ShowStatus()
@@ -167,7 +152,7 @@ public class CommandHandler
             Padding = new Padding(1, 0),
         };
 
-        _console.Write(panel);
+        Write(panel);
     }
 
     private void ShowWhoami()
@@ -178,27 +163,27 @@ public class CommandHandler
             .AddColumn("Property")
             .AddColumn("Value");
 
-        table.AddRow("Connection ID", $"[yellow]{_connInfo.ConnectionId}[/]");
-        table.AddRow("Username", $"[blue]{Markup.Escape(_connInfo.Username)}[/]");
+        table.AddRow("Connection ID", $"[yellow]{Connection.ConnectionId}[/]");
+        table.AddRow("Username", $"[blue]{Escape(Connection.Username)}[/]");
 
-        if (_connInfo.AuthMethod == "none")
+        if (Connection.AuthMethod == "none")
         {
             table.AddRow("Auth Method", "[dim]anonymous[/]");
         }
-        else if (_connInfo.AuthMethod == "publickey")
+        else if (Connection.AuthMethod == "publickey")
         {
             table.AddRow("Auth Method", "[green]public key[/]");
-            if (_connInfo.KeyFingerprint != null)
+            if (Connection.KeyFingerprint != null)
             {
-                table.AddRow("Key Fingerprint", $"[dim]{Markup.Escape(_connInfo.KeyFingerprint)}[/]");
+                table.AddRow("Key Fingerprint", $"[dim]{Escape(Connection.KeyFingerprint)}[/]");
             }
         }
         else
         {
-            table.AddRow("Auth Method", Markup.Escape(_connInfo.AuthMethod));
+            table.AddRow("Auth Method", Escape(Connection.AuthMethod));
         }
 
-        _console.Write(table);
+        Write(table);
     }
 
     private void ShowConfig()
@@ -211,7 +196,7 @@ public class CommandHandler
         // Server identity
         var hostname = System.Net.Dns.GetHostName();
         var processId = Environment.ProcessId;
-        table.AddRow("Hostname", $"[yellow]{Markup.Escape(hostname)}[/]");
+        table.AddRow("Hostname", $"[yellow]{Escape(hostname)}[/]");
         table.AddRow("Process ID", $"[yellow]{processId}[/]");
 
         try
@@ -220,36 +205,31 @@ public class CommandHandler
                 .Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ||
                             a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
                 .Select(a => a.ToString());
-            table.AddRow("IP Addresses", $"[yellow]{Markup.Escape(string.Join(", ", addresses))}[/]");
+            table.AddRow("IP Addresses", $"[yellow]{Escape(string.Join(", ", addresses))}[/]");
         }
         catch
         {
             table.AddRow("IP Addresses", "[dim](unavailable)[/]");
         }
 
-        table.AddRow("Port", _options.Port.ToString());
-        table.AddRow("Banner", Markup.Escape(_options.Banner));
-        table.AddRow("HostKeyPath", Markup.Escape(_options.HostKeyPath));
-        table.AddRow("MaxConnections", _options.MaxConnections.ToString());
-        table.AddRow("LogLevel", _options.LogLevel);
-        table.AddRow("AllowAnonymous", _options.AllowAnonymous ? "[green]true[/]" : "[red]false[/]");
-        table.AddRow("AuthorizedKeysPath", _options.AuthorizedKeysPath ?? "[dim](not set)[/]");
+        table.AddRow("Port", Options.Port.ToString());
+        table.AddRow("Banner", Escape(Options.Banner));
+        table.AddRow("HostKeyPath", Escape(Options.HostKeyPath));
+        table.AddRow("MaxConnections", Options.MaxConnections.ToString());
+        table.AddRow("LogLevel", Options.LogLevel);
+        table.AddRow("AllowAnonymous", Options.AllowAnonymous ? "[green]true[/]" : "[red]false[/]");
+        table.AddRow("AuthorizedKeysPath", Options.AuthorizedKeysPath ?? "[dim](not set)[/]");
+        table.AddRow("SessionTimeoutMinutes", Options.SessionTimeoutMinutes == 0
+            ? "[dim]disabled[/]"
+            : $"{Options.SessionTimeoutMinutes} min");
 
-        _console.Write(table);
+        Write(table);
     }
 
     private void ShowMenu()
     {
-        var choice = _console.Prompt(
-            new SelectionPrompt<string>()
-                .Title("What would you like to do?")
-                .PageSize(5)
-                .AddChoices([
-                    "View server status",
-                    "Show connection info",
-                    "Clear screen",
-                    "Cancel"
-                ]));
+        var choice = Select("What would you like to do?",
+            ["View server status", "Show connection info", "Clear screen", "Cancel"]);
 
         switch (choice)
         {
@@ -260,17 +240,17 @@ public class CommandHandler
                 ShowWhoami();
                 break;
             case "Clear screen":
-                _console.Clear();
+                Clear();
                 break;
             case "Cancel":
-                _console.MarkupLine("[dim]Cancelled.[/]");
+                WriteLine("[dim]Cancelled.[/]");
                 break;
         }
     }
 
     private void ShowSelect()
     {
-        var fruit = _console.Prompt(
+        var fruit = Console.Prompt(
             new SelectionPrompt<string>()
                 .Title("What's your [green]favorite fruit[/]?")
                 .PageSize(10)
@@ -281,53 +261,46 @@ public class CommandHandler
                     "Pineapple", "Kiwi", "Peach", "Plum"
                 ]));
 
-        _console.MarkupLine($"You selected: [green]{fruit}[/]");
+        WriteLine($"You selected: [green]{fruit}[/]");
     }
 
     private void ShowMultiSelect()
     {
-        var toppings = _console.Prompt(
-            new MultiSelectionPrompt<string>()
-                .Title("Select your [green]pizza toppings[/]:")
-                .PageSize(8)
-                .Required(false)
-                .InstructionsText("[grey](Press [blue]<space>[/] to toggle, [green]<enter>[/] to accept)[/]")
-                .AddChoices([
-                    "Pepperoni", "Mushrooms", "Onions", "Sausage",
-                    "Bacon", "Extra cheese", "Black olives", "Green peppers",
-                    "Pineapple", "Spinach"
-                ]));
+        var toppings = MultiSelect("Select your [green]pizza toppings[/]:",
+            ["Pepperoni", "Mushrooms", "Onions", "Sausage",
+             "Bacon", "Extra cheese", "Black olives", "Green peppers",
+             "Pineapple", "Spinach"]);
 
         if (toppings.Count == 0)
         {
-            _console.MarkupLine("You selected: [yellow]Plain cheese pizza[/]");
+            WriteLine("You selected: [yellow]Plain cheese pizza[/]");
         }
         else
         {
-            _console.MarkupLine($"You selected: [green]{string.Join(", ", toppings)}[/]");
+            WriteLine($"You selected: [green]{string.Join(", ", toppings)}[/]");
         }
     }
 
     private void ShowConfirm()
     {
-        var confirmed = _console.Confirm("Do you want to continue?");
+        var confirmed = Confirm("Do you want to continue?");
 
         if (confirmed)
         {
-            _console.MarkupLine("[green]You confirmed![/]");
+            WriteLine("[green]You confirmed![/]");
         }
         else
         {
-            _console.MarkupLine("[yellow]You declined.[/]");
+            WriteLine("[yellow]You declined.[/]");
         }
     }
 
     private void ShowAsk()
     {
-        var name = _console.Ask<string>("What's your [green]name[/]?");
-        _console.MarkupLine($"Hello, [blue]{Markup.Escape(name)}[/]!");
+        var name = Ask("What's your [green]name[/]?");
+        WriteLine($"Hello, [blue]{Escape(name)}[/]!");
 
-        var age = _console.Prompt(
+        var age = Console.Prompt(
             new TextPrompt<int>("What's your [green]age[/]?")
                 .ValidationErrorMessage("[red]Please enter a valid number[/]")
                 .Validate(age => age switch
@@ -337,30 +310,26 @@ public class CommandHandler
                     _ => ValidationResult.Success(),
                 }));
 
-        _console.MarkupLine($"You are [blue]{age}[/] years old.");
+        WriteLine($"You are [blue]{age}[/] years old.");
     }
 
     private void ShowDemo()
     {
-        _console.MarkupLine("[bold]Running interactive demo...[/]\n");
+        WriteLine("[bold]Running interactive demo...[/]\n");
 
         // Selection
-        var color = _console.Prompt(
-            new SelectionPrompt<string>()
-                .Title("Pick a [green]color[/]:")
-                .AddChoices(["Red", "Green", "Blue", "Yellow"]));
+        var color = Select("Pick a [green]color[/]:",
+            ["Red", "Green", "Blue", "Yellow"]);
 
         // Multi-selection
-        var features = _console.Prompt(
-            new MultiSelectionPrompt<string>()
-                .Title("Select [green]features[/] to enable:")
-                .AddChoices(["Logging", "Metrics", "Tracing", "Alerts"]));
+        var features = MultiSelect("Select [green]features[/] to enable:",
+            ["Logging", "Metrics", "Tracing", "Alerts"]);
 
         // Confirmation
-        var proceed = _console.Confirm("Apply these settings?");
+        var proceed = Confirm("Apply these settings?");
 
         // Summary
-        _console.WriteLine();
+        WriteLine();
         var table = new Table()
             .Border(TableBorder.Rounded)
             .AddColumn("Setting")
@@ -370,12 +339,12 @@ public class CommandHandler
         table.AddRow("Features", string.Join(", ", features));
         table.AddRow("Applied", proceed ? "[green]Yes[/]" : "[red]No[/]");
 
-        _console.Write(table);
+        Write(table);
     }
 
     private void ShowProgress()
     {
-        _console.Progress()
+        Console.Progress()
             .AutoClear(false)
             .Columns(
             [
@@ -403,17 +372,16 @@ public class CommandHandler
                 }
             });
 
-        _console.MarkupLine("\n[green]All tasks completed![/]");
+        WriteLine("\n[green]All tasks completed![/]");
     }
 
     private void ShowSpinner()
     {
-        _console.Status()
+        Console.Status()
             .AutoRefresh(true)
             .Spinner(Spinner.Known.Dots)
             .Start("[yellow]Processing...[/]", ctx =>
             {
-                // Simulate work with different status messages
                 Thread.Sleep(1000);
 
                 ctx.Status("[yellow]Loading configuration...[/]");
@@ -433,7 +401,7 @@ public class CommandHandler
                 Thread.Sleep(500);
             });
 
-        _console.MarkupLine("[green]Done![/]");
+        WriteLine("[green]Done![/]");
     }
 
     private void ShowLive()
@@ -444,7 +412,7 @@ public class CommandHandler
             .AddColumn("Value")
             .AddColumn("Status");
 
-        _console.Live(table)
+        Console.Live(table)
             .AutoClear(false)
             .Overflow(VerticalOverflow.Ellipsis)
             .Start(ctx =>
@@ -482,7 +450,7 @@ public class CommandHandler
                 }
             });
 
-        _console.MarkupLine("\n[dim]Live display finished.[/]");
+        WriteLine("\n[dim]Live display finished.[/]");
     }
 
     private void ShowTree()
@@ -494,13 +462,13 @@ public class CommandHandler
         var src = root.AddNode("[blue]src[/]");
         var host = src.AddNode("[blue]SshServer.Host[/]");
         host.AddNode("[green]Program.cs[/]");
+        host.AddNode("[green]SshShellApplication.cs[/]");
+        host.AddNode("[green]DemoApp.cs[/]");
         host.AddNode("[green]appsettings.json[/]");
         var tui = host.AddNode("[blue]Tui[/]");
-        tui.AddNode("[green]CommandHandler.cs[/]");
+        tui.AddNode("[green]LineEditor.cs[/]");
         tui.AddNode("[green]SshConsoleFactory.cs[/]");
         tui.AddNode("[green]SshTextWriter.cs[/]");
-        tui.AddNode("[green]SshAnsiConsoleInput.cs[/]");
-        tui.AddNode("[green]EscapeSequenceParser.cs[/]");
 
         var core = src.AddNode("[blue]SshServer.Core[/]");
         var ssh = core.AddNode("[blue]Ssh[/]");
@@ -510,15 +478,15 @@ public class CommandHandler
         // Config files
         var config = root.AddNode("[magenta]Configuration[/]");
         config.AddNode("[dim]README.md[/]");
-        config.AddNode("[dim]CLAUDE.md[/]");
+        config.AddNode("[dim]DEVELOPERS.md[/]");
         config.AddNode("[dim]RELEASE_NOTES.md[/]");
 
-        _console.Write(root);
+        Write(root);
     }
 
     private void ShowBarChart()
     {
-        _console.Write(new BarChart()
+        Write(new BarChart()
             .Width(60)
             .Label("[green bold underline]Language Popularity[/]")
             .CenterLabel()
@@ -529,9 +497,9 @@ public class CommandHandler
             .AddItem("Go", 67, Color.Aqua)
             .AddItem("F#", 28, Color.Magenta1));
 
-        _console.WriteLine();
+        WriteLine();
 
-        _console.Write(new BarChart()
+        Write(new BarChart()
             .Width(60)
             .Label("[blue bold underline]Server Metrics[/]")
             .CenterLabel()
@@ -539,14 +507,5 @@ public class CommandHandler
             .AddItem("Memory", 72, Color.Yellow)
             .AddItem("Disk I/O", 30, Color.Blue)
             .AddItem("Network", 58, Color.Aqua));
-    }
-
-    /// <summary>
-    /// Render the welcome message.
-    /// </summary>
-    public void ShowWelcome()
-    {
-        _console.Write(new Rule("[green]Welcome to SshServer[/]").RuleStyle("dim"));
-        _console.MarkupLine("Type [blue]help[/] for available commands.");
     }
 }

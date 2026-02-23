@@ -11,11 +11,20 @@
   - Now displays server hostname, process ID, and IP addresses
 - **Enhanced `status` command**:
   - Now displays server process ID
-- **Updated README.md** with comprehensive documentation
 - **Session timeout**:
   - `SessionTimeoutMinutes` config option (0 = disabled)
   - Automatically disconnects idle sessions after configured duration
   - Displays timeout message before disconnecting
+- **SshShellApplication abstract base class**:
+  - New foundation for building SSH TUI applications
+  - Handles all SSH plumbing (PTY, line editing, Spectre.Console setup)
+  - Override `OnCommand()` to handle commands
+  - Virtual `Prompt`, `Completions`, `OnWelcome()`, `OnConnect()`, `OnDisconnect()`
+  - Built-in helpers: `WriteLine()`, `Ask()`, `Confirm()`, `Select()`, `MultiSelect()`, `Status()`, `Progress()`
+- **DemoApp** — refactored demo as `SshShellApplication` subclass
+- **Updated documentation**:
+  - README.md with comprehensive feature list
+  - DEVELOPERS.md guide for building custom applications
 
 ---
 

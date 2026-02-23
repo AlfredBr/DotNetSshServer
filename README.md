@@ -7,16 +7,35 @@ via SSH and interact with a TUI application. Inspired by charmbracelet's [wish](
 
 | Project | Description |
 |---------|-------------|
-| **SshServer.Core** | The SSH server library — handles connections, authentication, PTY, and channels. Use this as a dependency for your own SSH-based applications. |
-| **SshServer.Host** | A demo application showcasing the library's capabilities. Use this as a starting point for building your own SSH TUI programs. |
+| **SshServer.Core** | The SSH server library — handles connections, authentication, PTY, and channels. |
+| **SshServer.Host** | Demo application and framework for building SSH TUI apps. |
 
-The demo application (`SshServer.Host`) demonstrates:
-- Spectre.Console integration for rich terminal output
-- Interactive prompts and live displays
-- Line editing with history and tab completion
-- Public key and anonymous authentication
+### Key Classes
 
-To build your own SSH TUI application, copy `SshServer.Host` as a template and replace the `CommandHandler` with your own application logic.
+| Class | Description |
+|-------|-------------|
+| `SshShellApplication` | Abstract base class for SSH applications. Inherit from this and override `OnCommand()`. |
+| `DemoApp` | Example implementation showcasing Spectre.Console features. |
+
+### Build Your Own App
+
+```csharp
+public class MyApp : SshShellApplication
+{
+    protected override string Prompt => "myapp> ";
+
+    protected override IEnumerable<string> Completions => ["help", "quit"];
+
+    protected override bool OnCommand(string command)
+    {
+        if (command == "quit") return false;
+        WriteLine($"You said: {Escape(command)}");
+        return true;
+    }
+}
+```
+
+See [DEVELOPERS.md](DEVELOPERS.md) for the full guide.
 
 ## Features
 
@@ -128,9 +147,11 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 
 ```
 ┌─────────────────────────────┐
-│  TUI Application Layer      │  Spectre.Console
+│  Your Application           │  extends SshShellApplication
 ├─────────────────────────────┤
-│  SSH Shell/PTY Glue         │  LineEditor, CommandHandler
+│  SshShellApplication        │  Base class with helpers
+├─────────────────────────────┤
+│  TUI Infrastructure         │  Spectre.Console, LineEditor
 ├─────────────────────────────┤
 │  SSH Server Library         │  FxSsh (modernised)
 ├─────────────────────────────┤
@@ -161,6 +182,8 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 - [x] Graceful shutdown (Ctrl+C)
 - [x] Structured logging with connection IDs
 - [x] Ed25519 client key support
+- [x] Session timeout
+- [x] SshShellApplication base class for easy app development
 
 ### Roadmap
 - [ ] Password authentication

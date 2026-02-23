@@ -126,35 +126,19 @@ string GenerateConnectionId(Session session)
     return $"{ip}:{port}-{shortGuid}";
 }
 
-string FormatByte(byte b) => b switch
-{
-    0x00 => "\\0",
-    0x04 => "\\x04",
-    0x07 => "\\a",
-    0x08 => "\\b",
-    0x09 => "\\t",
-    0x0A => "\\n",
-    0x0D => "\\r",
-    0x1B => "\\e",
-    0x7F => "\\x7F",
-    _ when b < 0x20 => $"\\x{b:X2}",
-    _ when b < 0x7F => ((char)b).ToString(),
-    _ => $"\\x{b:X2}"
-};
-
 // ── event handlers ─────────────────────────────────────────────────────────────
 
 void OnConnectionAccepted(object? sender, Session session)
 {
     var connId = GenerateConnectionId(session);
-    var connInfo = new ConnectionInfo(connId);
+    var connInfo = new MutableConnectionInfo(connId);
     logger.LogInformation("[{ConnId}] Connection accepted", connId);
 
     session.ServiceRegistered += (_, service) => OnServiceRegistered(service, connId, connInfo);
     session.Disconnected += (_, _) => logger.LogInformation("[{ConnId}] Disconnected", connId);
 }
 
-void OnServiceRegistered(SshService service, string connId, ConnectionInfo connInfo)
+void OnServiceRegistered(SshService service, string connId, MutableConnectionInfo connInfo)
 {
     // Handle authentication service
     if (service is UserAuthService authService)
@@ -232,7 +216,7 @@ void OnServiceRegistered(SshService service, string connId, ConnectionInfo connI
     };
 }
 
-SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo connInfo, int termWidth, int termHeight)
+SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, MutableConnectionInfo connInfo, int termWidth, int termHeight)
 {
     logger.LogInformation("[{ConnId}] Shell: {ShellType}", connInfo.ConnectionId, e.ShellType);
 
@@ -243,32 +227,16 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo con
 
     var channel = e.Channel;
 
-    // Input mode: false = line editing, true = Spectre prompt
-    var inPromptMode = false;
-
-    // Session timeout tracking
+    // Session state
     var lastActivity = DateTime.UtcNow;
     var sessionClosed = false;
     Timer? timeoutTimer = null;
 
     // Create Spectre console for this connection
-    var ctx = SshConsoleFactory.Create(channel, termWidth, termHeight);
-    var consoleOutput = ctx.Output;
-    var consoleInput = ctx.Input;
-    var commandHandler = new CommandHandler(ctx.Console, connInfo.ToRecord(), options);
+    var consoleContext = SshConsoleFactory.Create(channel, termWidth, termHeight);
 
-    // Create line editor
-    var lineEditor = new LineEditor(data => channel.SendData(data))
-    {
-        Completions =
-        [
-            "help", "status", "whoami", "config", "clear", "menu", "select",
-            "multi", "confirm", "ask", "demo", "progress", "spinner",
-            "live", "tree", "chart", "quit", "exit"
-        ]
-    };
-
-    void Disconnect(string? reason = null)
+    // Disconnect helper
+    void Disconnect(string? reason)
     {
         if (sessionClosed) return;
         sessionClosed = true;
@@ -298,66 +266,18 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo con
         logger.LogDebug("[{ConnId}] Session timeout set to {Minutes} minute(s)", connInfo.ConnectionId, options.SessionTimeoutMinutes);
     }
 
-    // Welcome message via Spectre
-    commandHandler.ShowWelcome();
-    lineEditor.ShowPrompt();
+    // Create and run the application
+    var app = new DemoApp();
+    app.Run(
+        channel,
+        consoleContext,
+        connInfo.ToRecord(),
+        options,
+        Disconnect,
+        () => lastActivity = DateTime.UtcNow,
+        logger);
 
-    channel.DataReceived += (_, data) =>
-    {
-        // Update activity timestamp
-        lastActivity = DateTime.UtcNow;
-
-        // If in prompt mode, route all input to Spectre
-        if (inPromptMode)
-        {
-            consoleInput.EnqueueData(data);
-            return;
-        }
-
-        foreach (var b in data)
-        {
-            logger.LogTrace("[{ConnId}] Char: {Char}", connInfo.ConnectionId, FormatByte(b));
-
-            var result = lineEditor.ProcessByte(b);
-
-            switch (result)
-            {
-                case LineEditorResult.Disconnect:
-                    Disconnect();
-                    return;
-
-                case LineEditorResult.LineSubmitted:
-                    var command = lineEditor.SubmittedLine;
-                    logger.LogDebug("[{ConnId}] Command: {Command}", connInfo.ConnectionId, command);
-
-                    // Execute command asynchronously to allow input routing during prompts
-                    inPromptMode = true;
-                    Task.Run(() =>
-                    {
-                        try
-                        {
-                            if (!commandHandler.Execute(command))
-                            {
-                                Disconnect();
-                                return;
-                            }
-                        }
-                        finally
-                        {
-                            inPromptMode = false;
-                            consoleInput.Clear();
-                            lineEditor.ShowPrompt();
-                        }
-                    });
-                    return; // Exit the foreach - we're now in prompt mode
-
-                case LineEditorResult.Continue:
-                default:
-                    break;
-            }
-        }
-    };
-
+    // Handle channel close
     channel.CloseReceived += (_, _) =>
     {
         sessionClosed = true;
@@ -366,7 +286,7 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo con
         channel.SendClose(0);
     };
 
-    return consoleOutput;
+    return consoleContext.Output;
 }
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -374,7 +294,7 @@ SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, ConnectionInfo con
 /// <summary>
 /// Mutable connection info populated during authentication.
 /// </summary>
-class ConnectionInfo(string connectionId)
+class MutableConnectionInfo(string connectionId)
 {
     public string ConnectionId { get; } = connectionId;
     public string Username { get; private set; } = "unknown";
@@ -388,6 +308,6 @@ class ConnectionInfo(string connectionId)
         KeyFingerprint = fingerprint;
     }
 
-    public SshServer.Host.Tui.ConnectionInfo ToRecord() =>
+    public ConnectionInfo ToRecord() =>
         new(ConnectionId, Username, AuthMethod, KeyFingerprint);
 }
