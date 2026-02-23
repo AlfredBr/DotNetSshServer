@@ -1,5 +1,17 @@
 # Release Notes
 
+## 2026-02-23 (12)
+
+### Added
+- **Ed25519 host key algorithm support**:
+  - New `Ed25519Key` class using NSec.Cryptography
+  - Server can now accept clients offering ssh-ed25519 keys
+  - Added NSec.Cryptography package dependency to SshServer.Core
+- **Enhanced `config` command**:
+  - Now displays server hostname and IP addresses
+
+---
+
 ## 2026-02-22 (11)
 
 ### Added

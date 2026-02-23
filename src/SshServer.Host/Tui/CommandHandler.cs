@@ -207,6 +207,23 @@ public class CommandHandler
             .AddColumn("[blue]Setting[/]")
             .AddColumn("[blue]Value[/]");
 
+        // Server identity
+        var hostname = System.Net.Dns.GetHostName();
+        table.AddRow("Hostname", $"[yellow]{Markup.Escape(hostname)}[/]");
+
+        try
+        {
+            var addresses = System.Net.Dns.GetHostAddresses(hostname)
+                .Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ||
+                            a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                .Select(a => a.ToString());
+            table.AddRow("IP Addresses", $"[yellow]{Markup.Escape(string.Join(", ", addresses))}[/]");
+        }
+        catch
+        {
+            table.AddRow("IP Addresses", "[dim](unavailable)[/]");
+        }
+
         table.AddRow("Port", _options.Port.ToString());
         table.AddRow("Banner", Markup.Escape(_options.Banner));
         table.AddRow("HostKeyPath", Markup.Escape(_options.HostKeyPath));
