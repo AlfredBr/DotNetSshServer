@@ -8,7 +8,7 @@
   - Server can now accept clients offering ssh-ed25519 keys
   - Added NSec.Cryptography package dependency to SshServer.Core
 - **Enhanced `config` command**:
-  - Now displays server hostname, process ID, and IP addresses
+  - Now displays server hostname, OS version, process ID, and IP addresses
 - **Enhanced `status` command**:
   - Now displays server process ID
 - **Session timeout**:

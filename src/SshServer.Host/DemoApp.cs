@@ -195,8 +195,10 @@ public class DemoApp : SshShellApplication
 
         // Server identity
         var hostname = System.Net.Dns.GetHostName();
+        var osDescription = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
         var processId = Environment.ProcessId;
         table.AddRow("Hostname", $"[yellow]{Escape(hostname)}[/]");
+        table.AddRow("OS", $"[yellow]{Escape(osDescription)}[/]");
         table.AddRow("Process ID", $"[yellow]{processId}[/]");
 
         try
