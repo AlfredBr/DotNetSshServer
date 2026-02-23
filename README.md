@@ -258,11 +258,11 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 
 | Package | Purpose |
 |---------|---------|
-| `FxSsh` | Core SSH server (vendored source) |
-| `Microsoft.Extensions.Hosting` | Configuration and DI |
-| `Microsoft.Extensions.Logging` | Structured logging |
-| `Spectre.Console` | TUI rendering and prompts |
-| `NSec.Cryptography` | Ed25519 key support |
+| [FxSsh](https://github.com/Aimeast/FxSsh) | Core SSH server (vendored source) |
+| [Microsoft.Extensions.Hosting](https://github.com/dotnet/runtime) | Configuration and DI |
+| [Microsoft.Extensions.Logging](https://github.com/dotnet/runtime) | Structured logging |
+| [Spectre.Console](https://github.com/spectreconsole/spectre.console) | TUI rendering and prompts |
+| [NSec.Cryptography](https://github.com/ektrah/nsec) | Ed25519 key support |
 
 ## Project Status
 
@@ -297,6 +297,15 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 | 4254 | SSH Connection Protocol (channels, PTY) |
 | 5656 | ECDH key exchange |
 | 8032 | Ed25519 signing |
+
+## Acknowledgements
+
+This project builds upon the work of several excellent open source projects:
+
+- **[FxSsh](https://github.com/Aimeast/FxSsh)** by Aimeast — The core SSH protocol implementation. Source is vendored and modernised for .NET 10.
+- **[Spectre.Console](https://github.com/spectreconsole/spectre.console)** by Patrik Svensson — Beautiful console rendering, tables, prompts, and live displays.
+- **[NSec.Cryptography](https://github.com/ektrah/nsec)** by ektrah — Modern cryptographic library providing Ed25519 support.
+- **[Wish](https://github.com/charmbracelet/wish)** by Charmbracelet — Inspiration for building SSH-based TUI applications (Go implementation).
 
 ## License
 

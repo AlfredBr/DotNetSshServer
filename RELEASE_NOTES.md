@@ -1,5 +1,12 @@
 # Release Notes
 
+## 2026-02-23 (17)
+
+### Changed
+- Added GitHub links and Acknowledgements section to README.md for proper attribution to FxSsh, Spectre.Console, NSec.Cryptography, and Charmbracelet Wish
+
+---
+
 ## 2026-02-23 (16)
 
 ### Fixed
