@@ -112,6 +112,7 @@ ssh -p 2222 localhost
 | `OnWelcome()` | Basic message | Called to display welcome message |
 | `OnConnect()` | Empty | Called when connection established |
 | `OnDisconnect()` | Empty | Called when session ends |
+| `OnExec(command)` | `null` | Handle exec channel commands (scripting) |
 
 ### Built-in Properties
 
@@ -219,6 +220,39 @@ public class DbApp : SshShellApplication
 
             Write(table);
         }
+        return true;
+    }
+}
+```
+
+### Exec Channel (Scripting Support)
+
+```csharp
+public class ScriptableApp : SshShellApplication
+{
+    // Handle scripted commands: ssh user@host "status"
+    protected override string? OnExec(string command)
+    {
+        return command switch
+        {
+            "status" => "OK\n",
+            "version" => "1.0.0\n",
+            "health" => GetHealthCheck(),
+            _ => null  // Fall back to OnCommand
+        };
+    }
+
+    private string GetHealthCheck()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"uptime: {Environment.TickCount64 / 1000}s");
+        sb.AppendLine($"memory: {GC.GetTotalMemory(false) / 1024}KB");
+        return sb.ToString();
+    }
+
+    protected override bool OnCommand(string command)
+    {
+        // Interactive commands here
         return true;
     }
 }

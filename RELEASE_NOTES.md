@@ -1,5 +1,16 @@
 # Release Notes
 
+## 2026-02-23 (13)
+
+### Added
+- **Exec channel support** for scripted SSH commands:
+  - Run single commands via `ssh -p 2222 localhost <command>`
+  - Supported commands: `status`, `whoami`, `config`, `help`
+  - `OnExec(string command)` virtual method in `SshShellApplication`
+  - Enables scripting and automation scenarios
+
+---
+
 ## 2026-02-23 (12)
 
 ### Added

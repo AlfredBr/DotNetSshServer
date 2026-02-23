@@ -24,6 +24,67 @@ public class DemoApp : SshShellApplication
         WriteLine("Type [blue]help[/] for available commands.");
     }
 
+    protected override string? OnExec(string command)
+    {
+        var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return "";
+
+        return parts[0].ToLowerInvariant() switch
+        {
+            "status" => GetStatusText(),
+            "whoami" => GetWhoamiText(),
+            "config" => GetConfigText(),
+            "help" or "?" => GetHelpText(),
+            _ => $"Unknown command: {parts[0]}\nAvailable commands: help, status, whoami, config\n"
+        };
+    }
+
+    private string GetStatusText()
+    {
+        var processId = Environment.ProcessId;
+        return $"Server is running (PID {processId})\n";
+    }
+
+    private string GetWhoamiText()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Connection ID: {Connection.ConnectionId}");
+        sb.AppendLine($"Username: {Connection.Username}");
+        sb.AppendLine($"Auth Method: {Connection.AuthMethod}");
+        if (Connection.KeyFingerprint != null)
+            sb.AppendLine($"Key Fingerprint: {Connection.KeyFingerprint}");
+        return sb.ToString();
+    }
+
+    private string GetConfigText()
+    {
+        var sb = new System.Text.StringBuilder();
+        var hostname = System.Net.Dns.GetHostName();
+        var osDescription = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
+
+        sb.AppendLine($"Hostname: {hostname}");
+        sb.AppendLine($"OS: {osDescription}");
+        sb.AppendLine($"Process ID: {Environment.ProcessId}");
+        sb.AppendLine($"Port: {Options.Port}");
+        sb.AppendLine($"Banner: {Options.Banner}");
+        sb.AppendLine($"MaxConnections: {Options.MaxConnections}");
+        sb.AppendLine($"AllowAnonymous: {Options.AllowAnonymous}");
+        sb.AppendLine($"SessionTimeoutMinutes: {Options.SessionTimeoutMinutes}");
+        return sb.ToString();
+    }
+
+    private static string GetHelpText()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Available commands (exec mode):");
+        sb.AppendLine("  help    - Show this help");
+        sb.AppendLine("  status  - Show server status");
+        sb.AppendLine("  whoami  - Show connection info");
+        sb.AppendLine("  config  - Show server configuration");
+        return sb.ToString();
+    }
+
     protected override bool OnCommand(string command)
     {
         var parts = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);

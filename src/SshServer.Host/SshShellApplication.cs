@@ -84,6 +84,14 @@ public abstract class SshShellApplication
     /// </summary>
     protected virtual void OnDisconnect() { }
 
+    /// <summary>
+    /// Handle a single command from an exec channel (non-interactive).
+    /// Override to support scripted SSH commands like: ssh user@host "status"
+    /// </summary>
+    /// <param name="command">The command to execute.</param>
+    /// <returns>The output to send back to the client, or null to use OnCommand instead.</returns>
+    protected virtual string? OnExec(string command) => null;
+
     #endregion
 
     #region Helper Methods
@@ -274,6 +282,51 @@ public abstract class SshShellApplication
                 }
             }
         };
+    }
+
+    /// <summary>
+    /// Execute a single command (exec channel). Called by the framework.
+    /// </summary>
+    /// <returns>The output to send to the client.</returns>
+    internal string RunExec(
+        ConnectionInfo connInfo,
+        SshServerOptions options,
+        string command,
+        Microsoft.Extensions.Logging.ILogger logger)
+    {
+        Connection = connInfo;
+        Options = options;
+
+        logger.LogDebug("[{ConnId}] Exec: {Command}", connInfo.ConnectionId, command);
+
+        // Try the exec handler first
+        var execResult = OnExec(command);
+        if (execResult != null)
+        {
+            return execResult;
+        }
+
+        // Fall back to OnCommand with a StringWriter to capture output
+        using var sw = new StringWriter();
+        var console = AnsiConsole.Create(new AnsiConsoleSettings
+        {
+            Ansi = AnsiSupport.Yes,
+            ColorSystem = ColorSystemSupport.TrueColor,
+            Out = new AnsiConsoleOutput(sw)
+        });
+        _console = console;
+
+        try
+        {
+            OnCommand(command);
+        }
+        catch (Exception ex)
+        {
+            sw.WriteLine($"Error: {ex.Message}");
+            logger.LogError(ex, "[{ConnId}] Exec error", connInfo.ConnectionId);
+        }
+
+        return sw.ToString();
     }
 
     #endregion

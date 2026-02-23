@@ -218,7 +218,29 @@ void OnServiceRegistered(SshService service, string connId, MutableConnectionInf
 
 SshAnsiConsoleOutput? OnCommandOpened(CommandRequestedArgs e, MutableConnectionInfo connInfo, int termWidth, int termHeight)
 {
-    logger.LogInformation("[{ConnId}] Shell: {ShellType}", connInfo.ConnectionId, e.ShellType);
+    logger.LogInformation("[{ConnId}] Channel: {ShellType}", connInfo.ConnectionId, e.ShellType);
+
+    // Handle exec channel (single command execution)
+    if (e.ShellType == "exec")
+    {
+        e.Agreed = true;
+        var execChannel = e.Channel;
+        var execCommand = e.CommandText ?? "";
+
+        logger.LogInformation("[{ConnId}] Exec: {Command}", connInfo.ConnectionId, execCommand);
+
+        // Run command and send output
+        var execApp = new DemoApp();
+        var output = execApp.RunExec(connInfo.ToRecord(), options, execCommand, logger);
+
+        // Send output with proper line endings
+        var outputBytes = System.Text.Encoding.UTF8.GetBytes(output.Replace("\n", "\r\n"));
+        execChannel.SendData(outputBytes);
+        execChannel.SendEof();
+        execChannel.SendClose(0);
+
+        return null;
+    }
 
     if (e.ShellType != "shell")
         return null;

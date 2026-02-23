@@ -111,6 +111,18 @@ ssh -p 2222 localhost
 2. Set `AllowAnonymous` to `false` in `appsettings.json`
 3. Connect: `ssh -p 2222 localhost`
 
+### Scripted Commands (Exec Channel)
+```bash
+# Run a single command without entering interactive mode
+ssh -p 2222 localhost status
+ssh -p 2222 localhost whoami
+ssh -p 2222 localhost config
+
+# Use in scripts
+result=$(ssh -p 2222 localhost status)
+echo "Server says: $result"
+```
+
 ## Configuration
 
 Settings in `appsettings.json`:
