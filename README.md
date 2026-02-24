@@ -302,13 +302,13 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 
 This project builds on the shoulders of several excellent open-source projects:
 
-| Project | Author | License | Role |
+| Project | Author | Site | License | Role |
 |---------|--------|---------|------|
-| [FxSsh](https://github.com/Aimeast/FxSsh) | Aimeast | MIT | Core SSH protocol implementation (vendored and extended) |
-| [Spectre.Console](https://github.com/spectreconsole/spectre.console) | Patrik Svensson et al. | MIT | TUI rendering, interactive prompts, and live displays |
-| [NSec.Cryptography](https://www.nuget.org/packages/NSec.Cryptography) | [nsec.rocks](https://nsec.rocks) | Nicholas Walther | MIT | Ed25519 client key verification |
-| [Microsoft.Extensions.*](https://github.com/dotnet/extensions) | Microsoft / .NET Foundation | MIT | Hosting, configuration, dependency injection, and logging |
-| [charmbracelet/wish](https://github.com/charmbracelet/wish) | Charmbracelet | MIT | Original inspiration — SSH app framework for Go |
+| [FxSsh](https://github.com/Aimeast/FxSsh) | Aimeast | | MIT | Core SSH protocol implementation (vendored and extended) |
+| [Spectre.Console](https://github.com/spectreconsole/spectre.console) | Patrik Svensson et al. | [https://spectreconsole.net/](https://spectreconsole.net/) | MIT | TUI rendering, interactive prompts, and live displays |
+| [NSec.Cryptography](https://www.nuget.org/packages/NSec.Cryptography) | Nicholas Walther [nsec.rocks](https://nsec.rocks) | MIT | Ed25519 client key verification |
+| [Microsoft.Extensions.*](https://github.com/dotnet/extensions) | Microsoft / .NET Foundation | | MIT | Hosting, configuration, dependency injection, and logging |
+| [charmbracelet/wish](https://github.com/charmbracelet/wish) | Charmbracelet | https://charm.land/ | MIT | Original inspiration — SSH app framework for Go |
 
 ## License
 
