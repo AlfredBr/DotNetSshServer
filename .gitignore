@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# powershell files
+*.ps1
+
 # private keys
 *.pem
 
