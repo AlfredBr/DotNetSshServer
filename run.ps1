@@ -1,1 +1,1 @@
-dotnet run --project src/SshServer.Host
+dotnet run --project src/SshServer.Demo
