@@ -300,15 +300,7 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 
 ## Acknowledgements
 
-<<<<<<< HEAD
 This project builds upon the work of several excellent open source projects:
-
-- **[FxSsh](https://github.com/Aimeast/FxSsh)** by Aimeast — The core SSH protocol implementation. Source is vendored (copied into this repo rather than referenced as a package) and modernised for .NET 10.
-- **[Spectre.Console](https://github.com/spectreconsole/spectre.console)** by Patrik Svensson — Beautiful console rendering, tables, prompts, and live displays.
-- **[NSec.Cryptography](https://github.com/ektrah/nsec)** by ektrah — Modern cryptographic library providing Ed25519 support.
-- **[Wish](https://github.com/charmbracelet/wish)** by Charmbracelet — Inspiration for building SSH-based TUI applications (Go implementation).
-=======
-This project builds on the shoulders of several excellent open-source projects:
 
 | Project | Author | Site | License | Role |
 |---------|--------|---------|------|------|
@@ -317,9 +309,9 @@ This project builds on the shoulders of several excellent open-source projects:
 | [NSec.Cryptography](https://www.nuget.org/packages/NSec.Cryptography) | Nicholas Walther | [nsec.rocks](https://nsec.rocks) | MIT | Ed25519 client key verification |
 | [Microsoft.Extensions.*](https://github.com/dotnet/extensions) | Microsoft / .NET Foundation | | MIT | Hosting, configuration, dependency injection, and logging |
 | [charmbracelet/wish](https://github.com/charmbracelet/wish) | Charmbracelet | https://charm.land/ | MIT | Original inspiration — SSH app framework for Go |
->>>>>>> fd7980ba9047e9e836dba985b4990a11980496a9
 
 ## License
 
 MIT
+
 
