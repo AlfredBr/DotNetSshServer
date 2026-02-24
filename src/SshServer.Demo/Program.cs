@@ -34,6 +34,7 @@ public class Program
             .MapUser<DemoApp>("demo")
             .MapUser<AdminApp>("admin")
             .MapUser<MonitoringApp>("monitor")
+            .MapUser<DashboardApp>("dashboard")
 
             // Unknown usernames get the app selection menu
             .UseApplicationMenu(menu => menu
@@ -41,6 +42,7 @@ public class Program
                 .Add<DemoApp>("Demo", "Spectre.Console showcase with tables, charts, and prompts")
                 .Add<AdminApp>("Admin", "Server administration and log viewer")
                 .Add<MonitoringApp>("Monitor", "Live system metrics and health dashboard")
+                .Add<DashboardApp>("Dashboard", "Full-screen htop-style system dashboard")
                 .SetDefaultForExec("Demo")
                 .ReturnToMenuOnExit(true))
 

@@ -1,5 +1,23 @@
 # Release Notes
 
+## 2026-02-24 (18)
+
+### Added
+- **DashboardApp** — new full-screen htop-style TUI dashboard:
+  - `dashboard` or `top` command launches live updating full-screen view
+  - Layouts with CPU meters, memory usage, load averages, process list, and stats sidebar
+  - Individual metric views: `cpu`, `memory`, `disk`, `network`, `processes`
+  - Progress bars with color-coded thresholds (green/yellow/red)
+  - Process table with PID, USER, CPU%, MEM%, STAT, TIME+, COMMAND columns
+  - Network stats showing interface status, RX/TX bytes, connection summary
+  - Disk usage with filesystem, size, used, avail, and mount point
+  - Bar charts for CPU breakdown (user/system/idle) and memory allocation
+  - Function key handling with action notification panel (F1-F9 show messages, F10/q to exit)
+  - Simulated metrics for demonstration purposes
+  - Accessible via `ssh dashboard@host` or from the application menu
+
+---
+
 ## 2026-02-23 (17)
 
 ### Changed
