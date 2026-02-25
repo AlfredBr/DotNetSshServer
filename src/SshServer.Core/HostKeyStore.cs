@@ -1,6 +1,6 @@
 using FxSsh;
 
-namespace SshServer;
+namespace AlfredBr.SshServer.Core;
 
 /// <summary>
 /// Loads or generates the server host key, persisting it to disk so the

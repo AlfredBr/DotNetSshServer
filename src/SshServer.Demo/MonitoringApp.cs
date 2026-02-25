@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-namespace SshServer.Demo;
+namespace AlfredBr.SshServer.Core.Demo;
 
 /// <summary>
 /// Monitoring dashboard application for live metrics.

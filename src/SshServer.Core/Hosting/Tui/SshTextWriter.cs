@@ -2,7 +2,7 @@ using System.Text;
 
 using FxSsh.Services;
 
-namespace SshServer.Tui;
+namespace AlfredBr.SshServer.Core.Tui;
 
 /// <summary>
 /// A TextWriter that sends output to an SSH channel.

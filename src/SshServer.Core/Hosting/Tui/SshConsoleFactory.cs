@@ -3,7 +3,7 @@ using FxSsh.Services;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
-namespace SshServer.Tui;
+namespace AlfredBr.SshServer.Core.Tui;
 
 /// <summary>
 /// Factory for creating per-connection IAnsiConsole instances.

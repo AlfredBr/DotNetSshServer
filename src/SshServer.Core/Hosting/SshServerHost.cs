@@ -6,9 +6,9 @@ using FxSsh.Services;
 
 using Microsoft.Extensions.Logging;
 
-using SshServer.Tui;
+using AlfredBr.SshServer.Core.Tui;
 
-namespace SshServer;
+namespace AlfredBr.SshServer.Core;
 
 /// <summary>
 /// Hosts an SSH server with a configured shell application.

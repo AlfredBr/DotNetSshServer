@@ -1,4 +1,4 @@
-namespace SshServer.Tui;
+namespace AlfredBr.SshServer.Core.Tui;
 
 /// <summary>
 /// Parses ANSI escape sequences from SSH input into ConsoleKeyInfo.

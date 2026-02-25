@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 using Spectre.Console;
 
-namespace SshServer.Tui;
+namespace AlfredBr.SshServer.Core.Tui;
 
 /// <summary>
 /// Implements IAnsiConsoleInput to provide keyboard input to Spectre.Console

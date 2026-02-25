@@ -1,7 +1,6 @@
-using SshServer;
-using SshServer.Demo;
+using AlfredBr.SshServer.Core;
 
-namespace SshServer.Demo;
+namespace AlfredBr.SshServer.Core.Demo;
 
 public class Program
 {

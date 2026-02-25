@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NoWarn>CS1591</NoWarn>
-    <RootNamespace>SshServer</RootNamespace>
-    <AssemblyName>SshServer</AssemblyName>
+    <RootNamespace>AlfredBr.SshServer.Core</RootNamespace>
+    <AssemblyName>AlfredBr.SshServer.Core</AssemblyName>
   </PropertyGroup>
 
   <!-- NuGet Package Metadata -->

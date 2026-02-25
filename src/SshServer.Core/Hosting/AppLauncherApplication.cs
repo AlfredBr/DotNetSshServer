@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-namespace SshServer;
+namespace AlfredBr.SshServer.Core;
 
 /// <summary>
 /// Application that displays a menu for selecting among multiple registered apps.

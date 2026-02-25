@@ -1,4 +1,4 @@
-namespace SshServer;
+namespace AlfredBr.SshServer.Core;
 
 /// <summary>
 /// Connection information passed to the application.

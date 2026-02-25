@@ -1,4 +1,4 @@
-namespace SshServer;
+namespace AlfredBr.SshServer.Core;
 
 /// <summary>
 /// Configuration for the application selection menu.

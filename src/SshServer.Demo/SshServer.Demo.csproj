@@ -5,7 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>SshServer.Demo</RootNamespace>
+    <RootNamespace>AlfredBr.SshServer.Core.Demo</RootNamespace>
     <AssemblyName>SshServer.Demo</AssemblyName>
     <IsPackable>false</IsPackable>
   </PropertyGroup>

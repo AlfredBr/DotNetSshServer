@@ -4,6 +4,8 @@
 
 ### Changed
 - Renamed NuGet package from `SshServer` to **`AlfredBr.SshServer.Core`** (more specific, follows NuGet naming conventions)
+- Renamed all non-vendored C# namespaces: `SshServer` → `AlfredBr.SshServer.Core`, `SshServer.Tui` → `AlfredBr.SshServer.Core.Tui`
+- Vendored FxSsh code (`Ssh/` directory, `FxSsh.*` namespaces) left untouched
 - Reset package version to `1.0.0` under new package ID
 - Added `MIT LICENSE` file to repository root
 - Fixed `.snupkg` symbol package generation — added `<IncludeSymbols>` and `<SymbolPackageFormat>snupkg</SymbolPackageFormat>` to project

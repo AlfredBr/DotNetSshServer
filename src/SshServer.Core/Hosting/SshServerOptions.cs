@@ -1,4 +1,4 @@
-namespace SshServer;
+namespace AlfredBr.SshServer.Core;
 
 /// <summary>
 /// Configuration options for the SSH server.

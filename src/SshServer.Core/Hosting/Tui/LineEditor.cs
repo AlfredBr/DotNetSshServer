@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace SshServer.Tui;
+namespace AlfredBr.SshServer.Core.Tui;
 
 /// <summary>
 /// Result of processing input bytes.

@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-namespace SshServer.Demo;
+namespace AlfredBr.SshServer.Core.Demo;
 
 /// <summary>
 /// Demo SSH shell application showcasing Spectre.Console features.

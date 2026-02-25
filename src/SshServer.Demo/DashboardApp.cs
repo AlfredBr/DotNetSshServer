@@ -1,7 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
-namespace SshServer.Demo;
+namespace AlfredBr.SshServer.Core.Demo;
 
 /// <summary>
 /// Full-screen dashboard application similar to htop.

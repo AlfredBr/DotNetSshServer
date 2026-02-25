@@ -5,11 +5,11 @@ using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Rendering;
 
-using SshServer.Tui;
+using AlfredBr.SshServer.Core.Tui;
 
-using static SshServer.Tui.SshConsoleFactory;
+using static AlfredBr.SshServer.Core.Tui.SshConsoleFactory;
 
-namespace SshServer;
+namespace AlfredBr.SshServer.Core;
 
 /// <summary>
 /// Abstract base class for SSH shell applications.
