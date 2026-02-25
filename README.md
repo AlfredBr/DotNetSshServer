@@ -195,6 +195,72 @@ result=$(ssh -p 2222 localhost status)
 echo "Server says: $result"
 ```
 
+## Package and Publish (NuGet)
+
+This repository currently publishes the **SshServer** package from `src/SshServer.Core`.
+
+### 1) Build and pack
+
+```bash
+dotnet restore
+dotnet pack src/SshServer.Core/SshServer.Core.csproj -c Release -o artifacts/nuget
+```
+
+Expected output:
+- `artifacts/nuget/SshServer.<version>.nupkg`
+- `artifacts/nuget/SshServer.<version>.snupkg`
+
+### 2) Validate package contents locally (optional)
+
+```bash
+dotnet new console -n SshServer.PackageSmokeTest
+cd SshServer.PackageSmokeTest
+dotnet add package SshServer --version <version>
+dotnet build
+```
+
+### 3) Publish to nuget.org
+
+Create an API key at <https://www.nuget.org/account/apikeys>, then run:
+
+```bash
+dotnet nuget push artifacts/nuget/SshServer.<version>.nupkg \
+    --api-key <NUGET_API_KEY> \
+    --source https://api.nuget.org/v3/index.json
+
+dotnet nuget push artifacts/nuget/SshServer.<version>.snupkg \
+    --api-key <NUGET_API_KEY> \
+    --source https://api.nuget.org/v3/index.json
+```
+
+### 4) Publish via GitHub Actions (recommended)
+
+This repository includes [publish-nuget.yml](.github/workflows/publish-nuget.yml), which publishes on:
+- Git tag push matching `v*` (for example `v1.0.1`)
+- Manual run via **workflow_dispatch**
+
+Setup steps:
+1. In GitHub repo settings, add secret `NUGET_API_KEY`.
+2. Update `<Version>` in `src/SshServer.Core/SshServer.Core.csproj`.
+3. Create and push a tag:
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+The workflow packs `SshServer.Core` and pushes both `.nupkg` and `.snupkg` with `--skip-duplicate`.
+
+### CI package validation
+
+This repository also includes [pack-validation.yml](.github/workflows/pack-validation.yml), which runs on pull requests and pushes to `main`.
+
+It validates package readiness by running restore, build, and pack steps for `SshServer.Core`, then uploads the generated package artifacts for inspection.
+
+### Versioning note
+
+Update `<Version>` in `src/SshServer.Core/SshServer.Core.csproj` before packing.
+
 ## Configuration
 
 Settings can be configured via `appsettings.json`:

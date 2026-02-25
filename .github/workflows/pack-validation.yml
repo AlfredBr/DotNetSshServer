@@ -1,0 +1,39 @@
+name: Validate Package
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pack:
+    name: Restore, build, and pack
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore src/SshServer.Core/SshServer.Core.csproj
+
+      - name: Build
+        run: dotnet build src/SshServer.Core/SshServer.Core.csproj -c Release --no-restore
+
+      - name: Pack
+        run: dotnet pack src/SshServer.Core/SshServer.Core.csproj -c Release --no-build -o artifacts/nuget
+
+      - name: Upload NuGet artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: artifacts/nuget/*
