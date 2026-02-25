@@ -19,7 +19,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/alfredbr/sshserver</RepositoryUrl>
+    <RepositoryUrl>https://github.com/alfredbr/DotNetSshServer</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
