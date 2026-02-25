@@ -18,6 +18,8 @@
     <PackageTags>ssh;server;tui;terminal;spectre;console</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/alfredbr/DotNetSshServer</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
