@@ -12,7 +12,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>AlfredBr.SshServer.Core</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Description>SSH server library for building TUI applications over SSH. Includes Spectre.Console integration, emacs-style line editing, and a fluent builder API.</Description>
     <Authors>alfredbr</Authors>
     <PackageTags>ssh;server;tui;terminal;spectre;console</PackageTags>
@@ -21,12 +21,14 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <RepositoryUrl>https://github.com/alfredbr/DotNetSshServer</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="" />
+    <None Include="../../icon.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>

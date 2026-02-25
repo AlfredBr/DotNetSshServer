@@ -1,5 +1,9 @@
 # .NET SSH Server
 
+[![NuGet](https://img.shields.io/nuget/v/AlfredBr.SshServer.Core.svg)](https://www.nuget.org/packages/AlfredBr.SshServer.Core)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/AlfredBr.SshServer.Core.svg)](https://www.nuget.org/packages/AlfredBr.SshServer.Core)
+[![Build](https://github.com/AlfredBr/DotNetSshServer/actions/workflows/pack-validation.yml/badge.svg)](https://github.com/AlfredBr/DotNetSshServer/actions/workflows/pack-validation.yml)
+
 A lightweight SSH server library in C# (.NET 10) that allows terminal clients to connect
 via SSH and interact with a TUI application. Inspired by charmbracelet's [wish](https://github.com/charmbracelet/wish) package in Go.
 
@@ -8,7 +12,7 @@ via SSH and interact with a TUI application. Inspired by charmbracelet's [wish](
 ### Install the Package
 
 ```bash
-dotnet add package SshServer
+dotnet add package AlfredBr.SshServer.Core
 ```
 
 ### Create Your Application
@@ -54,7 +58,7 @@ See [DEVELOPERS.md](DEVELOPERS.md) for the full guide.
 
 | Project | Description |
 |---------|-------------|
-| **SshServer** | The SSH server library — includes SSH protocol, TUI infrastructure, and builder API. |
+| **AlfredBr.SshServer.Core** | The SSH server library — includes SSH protocol, TUI infrastructure, and builder API. |
 | **SshServer.Demo** | Demo application showcasing Spectre.Console features. |
 
 ### Key Classes
@@ -197,7 +201,7 @@ echo "Server says: $result"
 
 ## Package and Publish (NuGet)
 
-This repository currently publishes the **SshServer** package from `src/SshServer.Core`.
+This repository publishes the **AlfredBr.SshServer.Core** package from `src/SshServer.Core`.
 
 ### 1) Build and pack
 
@@ -207,59 +211,43 @@ dotnet pack src/SshServer.Core/SshServer.Core.csproj -c Release -o artifacts/nug
 ```
 
 Expected output:
-- `artifacts/nuget/SshServer.<version>.nupkg`
-- `artifacts/nuget/SshServer.<version>.snupkg`
+- `artifacts/nuget/AlfredBr.SshServer.Core.<version>.nupkg`
+- `artifacts/nuget/AlfredBr.SshServer.Core.<version>.snupkg`
 
 ### 2) Validate package contents locally (optional)
 
 ```bash
-dotnet new console -n SshServer.PackageSmokeTest
-cd SshServer.PackageSmokeTest
-dotnet add package SshServer --version <version>
+dotnet new console -n SmokeTest
+cd SmokeTest
+dotnet add package AlfredBr.SshServer.Core
 dotnet build
 ```
 
-### 3) Publish to nuget.org
-
-Create an API key at <https://www.nuget.org/account/apikeys>, then run:
-
-```bash
-dotnet nuget push artifacts/nuget/SshServer.<version>.nupkg \
-    --api-key <NUGET_API_KEY> \
-    --source https://api.nuget.org/v3/index.json
-
-dotnet nuget push artifacts/nuget/SshServer.<version>.snupkg \
-    --api-key <NUGET_API_KEY> \
-    --source https://api.nuget.org/v3/index.json
-```
-
-### 4) Publish via GitHub Actions (recommended)
+### 3) Publish via GitHub Actions (recommended)
 
 This repository includes [publish-nuget.yml](.github/workflows/publish-nuget.yml), which publishes on:
-- Git tag push matching `v*` (for example `v1.0.1`)
+- Git tag push matching `v*` (e.g. `v1.0.0`)
 - Manual run via **workflow_dispatch**
 
 Setup steps:
-1. In GitHub repo settings, add secret `NUGET_API_KEY`.
+1. In GitHub repo settings, add secret `NUGET_API_KEY` (from nuget.org → Account → API Keys).
 2. Update `<Version>` in `src/SshServer.Core/SshServer.Core.csproj`.
 3. Create and push a tag:
 
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
-The workflow packs `SshServer.Core` and pushes both `.nupkg` and `.snupkg` with `--skip-duplicate`.
+The workflow packs and pushes both `.nupkg` and `.snupkg` with `--skip-duplicate`.
 
 ### CI package validation
 
-This repository also includes [pack-validation.yml](.github/workflows/pack-validation.yml), which runs on pull requests and pushes to `main`.
+[pack-validation.yml](.github/workflows/pack-validation.yml) runs on pull requests and pushes to `main`. It validates restore, build, and pack, then uploads the artifacts for inspection.
 
-It validates package readiness by running restore, build, and pack steps for `SshServer.Core`, then uploads the generated package artifacts for inspection.
+### Versioning
 
-### Versioning note
-
-Update `<Version>` in `src/SshServer.Core/SshServer.Core.csproj` before packing.
+Update `<Version>` in `src/SshServer.Core/SshServer.Core.csproj` before tagging.
 
 ## Configuration
 
@@ -378,6 +366,6 @@ This project builds upon the work of several excellent open source projects:
 
 ## License
 
-MIT
+[MIT](LICENSE) — Copyright (c) 2026 Alfred Broderick
 
 

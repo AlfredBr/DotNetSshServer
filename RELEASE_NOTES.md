@@ -1,5 +1,16 @@
 # Release Notes
 
+## 2026-02-25 (19)
+
+### Changed
+- Renamed NuGet package from `SshServer` to **`AlfredBr.SshServer.Core`** (more specific, follows NuGet naming conventions)
+- Reset package version to `1.0.0` under new package ID
+- Added `MIT LICENSE` file to repository root
+- Fixed `.snupkg` symbol package generation — added `<IncludeSymbols>` and `<SymbolPackageFormat>snupkg</SymbolPackageFormat>` to project
+- Added NuGet version, download, and CI status badges to README
+
+---
+
 ## 2026-02-24 (18)
 
 ### Added
