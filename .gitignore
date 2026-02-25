@@ -12,6 +12,9 @@
 # future planning files
 PLAN*
 
+# original files
+*.orig
+
 # private keys
 *.pem
 
