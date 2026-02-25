@@ -9,6 +9,9 @@
 # powershell files
 *.ps1
 
+# future planning files
+PLAN*
+
 # private keys
 *.pem
 
