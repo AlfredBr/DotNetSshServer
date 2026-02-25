@@ -15,7 +15,7 @@ via SSH and interact with a TUI application. Inspired by charmbracelet's [wish](
 dotnet add package AlfredBr.SshServer.Core
 ```
 
-[View on NuGet: AlfredBr.SshServer.Core](https://www.nuget.org/packages/AlfredBr.SshServer.Core) — see [PUBLISHING.md](PUBLISHING.md) for release instructions.
+[View on NuGet: AlfredBr.SshServer.Core](https://www.nuget.org/packages/AlfredBr.SshServer.Core)
 
 ### Create Your Application
 
@@ -319,5 +319,6 @@ This project builds upon the work of several excellent open source projects:
 ## License
 
 [MIT](LICENSE) — Copyright (c) 2026 Alfred Broderick
+
 
 
