@@ -15,6 +15,7 @@ public class EscapeSequenceParser
         Escape,      // Received 0x1B
         Bracket,     // Received 0x1B [
         BracketNum,  // Received 0x1B [ followed by digits
+        SS3,         // Received 0x1B O (SS3 - Single Shift 3)
     }
 
     /// <summary>
@@ -38,6 +39,12 @@ public class EscapeSequenceParser
                 if (b == '[')
                 {
                     _state = ParserState.Bracket;
+                    return null;
+                }
+                if (b == 'O')
+                {
+                    // SS3 (Single Shift 3) sequence - used for F1-F4 and keypad
+                    _state = ParserState.SS3;
                     return null;
                 }
                 // Alt+key comes as ESC followed by the key
@@ -79,11 +86,33 @@ public class EscapeSequenceParser
                 _state = ParserState.Normal;
                 return CsiLetterToKeyInfo((char)b);
 
+            case ParserState.SS3:
+                // SS3 sequences: ESC O followed by a letter
+                _state = ParserState.Normal;
+                return SS3LetterToKeyInfo((char)b);
+
             default:
                 _state = ParserState.Normal;
                 return ByteToKeyInfo(b);
         }
     }
+
+    private static ConsoleKeyInfo SS3LetterToKeyInfo(char c) => c switch
+    {
+        // F1-F4 (vt100/xterm style)
+        'P' => new ConsoleKeyInfo('\0', ConsoleKey.F1, false, false, false),
+        'Q' => new ConsoleKeyInfo('\0', ConsoleKey.F2, false, false, false),
+        'R' => new ConsoleKeyInfo('\0', ConsoleKey.F3, false, false, false),
+        'S' => new ConsoleKeyInfo('\0', ConsoleKey.F4, false, false, false),
+        // Keypad keys (application mode)
+        'H' => new ConsoleKeyInfo('\0', ConsoleKey.Home, false, false, false),
+        'F' => new ConsoleKeyInfo('\0', ConsoleKey.End, false, false, false),
+        'A' => new ConsoleKeyInfo('\0', ConsoleKey.UpArrow, false, false, false),
+        'B' => new ConsoleKeyInfo('\0', ConsoleKey.DownArrow, false, false, false),
+        'C' => new ConsoleKeyInfo('\0', ConsoleKey.RightArrow, false, false, false),
+        'D' => new ConsoleKeyInfo('\0', ConsoleKey.LeftArrow, false, false, false),
+        _ => new ConsoleKeyInfo(c, ConsoleKey.None, false, false, false),
+    };
 
     /// <summary>
     /// Reset parser state (e.g., on timeout).

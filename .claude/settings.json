@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./**/*.orig)",
+      "Read(./**/*.bak)",
+      "Read(./**/node_modules/**)",
+      "Read(./**/bin/**)",
+      "Read(./**/obj/**)"
+    ]
+  }
+}
