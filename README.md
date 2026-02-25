@@ -15,10 +15,12 @@ via SSH and interact with a TUI application. Inspired by charmbracelet's [wish](
 dotnet add package AlfredBr.SshServer.Core
 ```
 
+[View on NuGet: AlfredBr.SshServer.Core](https://www.nuget.org/packages/AlfredBr.SshServer.Core) — see [PUBLISHING.md](PUBLISHING.md) for release instructions.
+
 ### Create Your Application
 
 ```csharp
-using SshServer;
+using AlfredBr.SshServer.Core;
 
 public class MyApp : SshShellApplication
 {
@@ -198,56 +200,6 @@ ssh -p 2222 localhost config
 result=$(ssh -p 2222 localhost status)
 echo "Server says: $result"
 ```
-
-## Package and Publish (NuGet)
-
-This repository publishes the **AlfredBr.SshServer.Core** package from `src/SshServer.Core`.
-
-### 1) Build and pack
-
-```bash
-dotnet restore
-dotnet pack src/SshServer.Core/SshServer.Core.csproj -c Release -o artifacts/nuget
-```
-
-Expected output:
-- `artifacts/nuget/AlfredBr.SshServer.Core.<version>.nupkg`
-- `artifacts/nuget/AlfredBr.SshServer.Core.<version>.snupkg`
-
-### 2) Validate package contents locally (optional)
-
-```bash
-dotnet new console -n SmokeTest
-cd SmokeTest
-dotnet add package AlfredBr.SshServer.Core
-dotnet build
-```
-
-### 3) Publish via GitHub Actions (recommended)
-
-This repository includes [publish-nuget.yml](.github/workflows/publish-nuget.yml), which publishes on:
-- Git tag push matching `v*` (e.g. `v1.0.0`)
-- Manual run via **workflow_dispatch**
-
-Setup steps:
-1. In GitHub repo settings, add secret `NUGET_API_KEY` (from nuget.org → Account → API Keys).
-2. Update `<Version>` in `src/SshServer.Core/SshServer.Core.csproj`.
-3. Create and push a tag:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-The workflow packs and pushes both `.nupkg` and `.snupkg` with `--skip-duplicate`.
-
-### CI package validation
-
-[pack-validation.yml](.github/workflows/pack-validation.yml) runs on pull requests and pushes to `main`. It validates restore, build, and pack, then uploads the artifacts for inspection.
-
-### Versioning
-
-Update `<Version>` in `src/SshServer.Core/SshServer.Core.csproj` before tagging.
 
 ## Configuration
 

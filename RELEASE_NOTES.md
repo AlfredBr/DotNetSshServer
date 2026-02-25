@@ -1,5 +1,13 @@
 # Release Notes
 
+## 2026-02-25 (20)
+
+### Changed
+- Moved NuGet build/publish instructions out of README into `PUBLISHING.md`
+- Fixed Quick Start code example namespace (`SshServer` → `AlfredBr.SshServer.Core`)
+
+---
+
 ## 2026-02-25 (19)
 
 ### Changed
