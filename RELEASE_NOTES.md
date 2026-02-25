@@ -1,5 +1,18 @@
 # Release Notes
 
+## 2026-02-25 (18)
+
+### Changed
+- Improved NuGet packaging readiness for `SshServer`:
+  - Added deterministic pack defaults and symbol package generation (`.snupkg`)
+  - Added SourceLink support via `Microsoft.SourceLink.GitHub`
+  - Marked `SshServer.Demo` as non-packable
+  - Added README instructions for pack, smoke test, and publish to nuget.org
+  - Added GitHub Actions workflow `.github/workflows/publish-nuget.yml` for tag-driven and manual NuGet publishing
+  - Added GitHub Actions workflow `.github/workflows/pack-validation.yml` to validate pack output on pull requests and `main`
+
+---
+
 ## 2026-02-23 (17)
 
 ### Changed
