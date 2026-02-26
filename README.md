@@ -153,6 +153,21 @@ ssh guest@localhost "admin:logs" # Exec 'logs' in AdminApp
 - **Interactive prompts** — selection, multi-select, confirmation, text input
 - **Live displays** — progress bars, spinners, live-updating tables
 
+#### SshShellApplication Helper Methods
+
+| Method | Description |
+|--------|-------------|
+| `WriteLine(text)` | Write a line of text (supports Spectre markup). |
+| `Ask(prompt)` | Text input prompt (returns `string`). |
+| `Ask<T>(prompt)` | Typed input prompt (e.g., `int`, `double`). |
+| `AskBox(prompt, width)` | Show a bordered box input prompt (returns `string`). Width 0 = full console width. |
+| `AskBox<T>(prompt, width)` | Show a bordered box prompt collecting a typed value. |
+| `Confirm(prompt)` | Yes/No confirmation prompt. |
+| `Select(prompt, items)` | Single-item selection list. |
+| `MultiSelect(prompt, items)` | Multi-item selection list. |
+| `Status(message, action)` | Status spinner while running an action. |
+| `Progress(action)` | Progress bar for tracked tasks. |
+
 ## Run the Demo
 
 ```bash
@@ -173,6 +188,7 @@ ssh -p 2222 localhost
 | `multi` | Multi-select from a list |
 | `confirm` | Yes/No confirmation |
 | `ask` | Text input with validation |
+| `askbox` | Bordered box input prompt demo |
 | `demo` | Run all interactive demos |
 | `progress` | Progress bar demo |
 | `spinner` | Status spinner demo |

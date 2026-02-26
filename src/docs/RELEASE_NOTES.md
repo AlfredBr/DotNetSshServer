@@ -1,5 +1,14 @@
 # Release Notes
 
+## 2026-02-26 (22)
+
+### Added
+- **`AskBoxPrompt<T>`** (`src/SshServer.Core/Hosting/Tui/AskBoxPrompt.cs`) — live, bordered, side-by-side input widget. Renders a 3-row box with the prompt label in the left panel and the cursor in the right input panel.
+- **`SshShellApplication.AskBox(prompt, width)`** and **`AskBox<T>(prompt, width)`** — convenience wrappers matching the existing `Ask`/`Ask<T>` API.
+- `askbox` command in `DemoApp` demonstrates both `string` and `int` collection.
+
+---
+
 ## 2026-02-26 (21)
 
 ### Added
