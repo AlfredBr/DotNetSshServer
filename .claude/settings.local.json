@@ -10,7 +10,8 @@
       "Bash(grep:*)",
       "Bash(echo Platform env var: $Platform:*)",
       "Bash(cd /e/sshserver && dotnet build SshServer.slnx 2>&1)",
-      "Bash(Get-ChildItem:*)"
+      "Bash(Get-ChildItem:*)",
+      "Bash(git:*)"
     ]
   }
 }
