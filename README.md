@@ -54,7 +54,7 @@ await SshServerHost.CreateBuilder()
 ssh -p 2222 localhost
 ```
 
-See [DEVELOPERS.md](DEVELOPERS.md) for the full guide.
+See the [API Manual](src/docs/API_MANUAL.md) for the complete API reference, or [DEVELOPERS.md](src/docs/DEVELOPERS.md) for the contributor guide.
 
 ## Project Structure
 

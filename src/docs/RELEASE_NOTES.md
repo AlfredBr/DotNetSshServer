@@ -1,5 +1,12 @@
 # Release Notes
 
+## 2026-02-26 (21)
+
+### Added
+- **`src/docs/API_MANUAL.md`** — comprehensive NuGet consumer API reference covering all public types, methods, properties, lifecycle callbacks, configuration options, authentication, exec channel, graceful shutdown, and complete code examples. NuGet users no longer need to read the source to use the library.
+
+---
+
 ## 2026-02-25 (20)
 
 ### Changed

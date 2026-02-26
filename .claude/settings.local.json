@@ -9,7 +9,8 @@
       "Bash(cd /e/sshserver && dotnet build src/SshServer.Core/SshServer.Core.csproj 2>&1)",
       "Bash(grep:*)",
       "Bash(echo Platform env var: $Platform:*)",
-      "Bash(cd /e/sshserver && dotnet build SshServer.slnx 2>&1)"
+      "Bash(cd /e/sshserver && dotnet build SshServer.slnx 2>&1)",
+      "Bash(Get-ChildItem:*)"
     ]
   }
 }
