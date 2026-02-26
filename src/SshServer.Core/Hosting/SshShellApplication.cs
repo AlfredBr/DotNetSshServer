@@ -122,6 +122,24 @@ public abstract class SshShellApplication
     protected T Ask<T>(string prompt) => _console.Ask<T>(prompt);
 
     /// <summary>
+    /// Ask for text input using a bordered box prompt. The prompt label appears
+    /// in the left panel; the user types in the right panel.
+    /// </summary>
+    /// <param name="prompt">Label text (supports Spectre markup).</param>
+    /// <param name="width">Total box width. 0 (default) uses the console width.</param>
+    protected string AskBox(string prompt, int width = 0)
+        => _console.Prompt(new AskBoxPrompt<string>(prompt, width));
+
+    /// <summary>
+    /// Ask for typed input using a bordered box prompt.
+    /// </summary>
+    /// <typeparam name="T">The type to collect and convert from the user.</typeparam>
+    /// <param name="prompt">Label text (supports Spectre markup).</param>
+    /// <param name="width">Total box width. 0 (default) uses the console width.</param>
+    protected T AskBox<T>(string prompt, int width = 0)
+        => _console.Prompt(new AskBoxPrompt<T>(prompt, width));
+
+    /// <summary>
     /// Ask for confirmation (yes/no).
     /// </summary>
     protected bool Confirm(string prompt, bool defaultValue = true)
