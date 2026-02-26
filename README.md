@@ -167,6 +167,7 @@ ssh guest@localhost "admin:logs" # Exec 'logs' in AdminApp
 | `MultiSelect(prompt, items)` | Multi-item selection list. |
 | `Status(message, action)` | Status spinner while running an action. |
 | `Progress(action)` | Progress bar for tracked tasks. |
+| `Escape(text)` | Escape a string for safe use in Spectre markup. |
 
 ## Run the Demo
 
