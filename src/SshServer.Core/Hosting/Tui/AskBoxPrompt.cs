@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text;
 
 using Spectre.Console;
 
@@ -47,7 +48,7 @@ public class AskBoxPrompt<T> : IPrompt<T>
                 if (converted is T typed)
                     return typed;
             }
-            catch { }
+            catch (Exception) { }
 
             console.MarkupLine("[red]Invalid input — please try again.[/]");
         }
@@ -88,13 +89,13 @@ public class AskBoxPrompt<T> : IPrompt<T>
         raw.Flush();
 
         // ── Input loop ───────────────────────────────────────────────────────
-        var buffer = new System.Text.StringBuilder();
+        var buffer = new StringBuilder();
         var maxInput = inputCol - 1;   // leave 1 column gap before right border
 
         while (true)
         {
             var key = await console.Input.ReadKeyAsync(true, cancellationToken);
-            if (key is null) break;
+            if (key is null) throw new OperationCanceledException();
 
             var k = key.Value;
 
