@@ -13,7 +13,7 @@ public class DemoApp : SshShellApplication
     protected override IEnumerable<string> Completions =>
     [
         "help", "status", "whoami", "config", "clear",
-        "menu", "select", "multi", "confirm", "ask", "demo",
+        "menu", "select", "multi", "confirm", "ask", "askbox", "demo",
         "progress", "spinner", "live", "tree", "chart",
         "quit", "exit"
     ];
@@ -135,6 +135,10 @@ public class DemoApp : SshShellApplication
                 ShowAsk();
                 break;
 
+            case "askbox":
+                ShowAskBox();
+                break;
+
             case "demo":
                 ShowDemo();
                 break;
@@ -189,6 +193,7 @@ public class DemoApp : SshShellApplication
         table.AddRow("[yellow]multi[/]", "[yellow]Multi-select from a list[/]");
         table.AddRow("[yellow]confirm[/]", "[yellow]Yes/No confirmation[/]");
         table.AddRow("[yellow]ask[/]", "[yellow]Text input prompt[/]");
+        table.AddRow("[yellow]askbox[/]", "[yellow]Bordered box input prompt[/]");
         table.AddRow("[yellow]demo[/]", "[yellow]Run all interactive demos[/]");
         table.AddRow("[green]progress[/]", "[green]Progress bar demo[/]");
         table.AddRow("[green]spinner[/]", "[green]Status spinner demo[/]");
@@ -373,6 +378,15 @@ public class DemoApp : SshShellApplication
                     _ => ValidationResult.Success(),
                 }));
 
+        WriteLine($"You are [blue]{age}[/] years old.");
+    }
+
+    private void ShowAskBox()
+    {
+        var name = AskBox("What's your [green]name[/]?");
+        WriteLine($"Hello, [blue]{Escape(name)}[/]!");
+
+        var age = AskBox<int>("What's your [green]age[/]?");
         WriteLine($"You are [blue]{age}[/] years old.");
     }
 
