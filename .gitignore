@@ -18,6 +18,9 @@ PLAN*
 # private keys
 *.pem
 
+# authorized keys
+authorized_keys
+
 # User-specific files
 *.rsuser
 *.suo
