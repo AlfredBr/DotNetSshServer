@@ -1,5 +1,13 @@
 # Release Notes
 
+## 2026-02-27 (23)
+
+### Fixed
+- **`LineEditor` tab completion** — after displaying multiple completion candidates, the styled prompt and current input buffer are now correctly reprinted using the `RenderPrompt` callback (instead of the raw `Prompt` string, which is empty when Spectre markup rendering is used).
+- **`LineEditor` empty-Enter** — pressing Enter on an empty buffer now correctly reprints the styled prompt via `RenderPrompt` instead of the no-op `ShowPrompt()` call.
+
+---
+
 ## 2026-02-26 (22)
 
 ### Added
