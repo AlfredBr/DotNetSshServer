@@ -547,7 +547,13 @@ public class LineEditor
             _sendData("\r\n"u8.ToArray());
             var matchList = string.Join("  ", matches);
             _sendData(Encoding.UTF8.GetBytes(matchList));
-            _sendData(Encoding.UTF8.GetBytes($"\r\n{Prompt}{_buffer}"));
+            _sendData("\r\n"u8.ToArray());
+            if (RenderPrompt != null)
+                RenderPrompt();
+            else
+                _sendData(Encoding.UTF8.GetBytes(Prompt));
+            if (_buffer.Length > 0)
+                _sendData(Encoding.UTF8.GetBytes(_buffer.ToString()));
         }
     }
 
@@ -568,7 +574,10 @@ public class LineEditor
             return LineEditorResult.LineSubmitted;
         }
 
-        ShowPrompt();
+        if (RenderPrompt != null)
+            RenderPrompt();
+        else
+            ShowPrompt();
         return LineEditorResult.Continue;
     }
 
