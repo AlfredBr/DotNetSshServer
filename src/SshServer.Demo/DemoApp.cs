@@ -69,6 +69,8 @@ public class DemoApp : SshShellApplication
         sb.AppendLine($"Port: {Options.Port}");
         sb.AppendLine($"Banner: {Options.Banner}");
         sb.AppendLine($"MaxConnections: {Options.MaxConnections}");
+        sb.AppendLine($"ConnectionRateLimitCount: {Options.ConnectionRateLimitCount}");
+        sb.AppendLine($"ConnectionRateLimitWindowSeconds: {Options.ConnectionRateLimitWindowSeconds}");
         sb.AppendLine($"AllowAnonymous: {Options.AllowAnonymous}");
         sb.AppendLine($"SessionTimeoutMinutes: {Options.SessionTimeoutMinutes}");
         return sb.ToString();
@@ -284,6 +286,12 @@ public class DemoApp : SshShellApplication
         table.AddRow("Banner", Escape(Options.Banner));
         table.AddRow("HostKeyPath", Escape(Options.HostKeyPath));
         table.AddRow("MaxConnections", Options.MaxConnections.ToString());
+        table.AddRow("ConnectionRateLimitCount", Options.ConnectionRateLimitCount == 0
+            ? "[dim]disabled[/]"
+            : Options.ConnectionRateLimitCount.ToString());
+        table.AddRow("ConnectionRateLimitWindowSeconds", Options.ConnectionRateLimitWindowSeconds == 0
+            ? "[dim]disabled[/]"
+            : $"{Options.ConnectionRateLimitWindowSeconds} sec");
         table.AddRow("LogLevel", Options.LogLevel);
         table.AddRow("AllowAnonymous", Options.AllowAnonymous ? "[green]true[/]" : "[red]false[/]");
         table.AddRow("AuthorizedKeysPath", Options.AuthorizedKeysPath ?? "[dim](not set)[/]");

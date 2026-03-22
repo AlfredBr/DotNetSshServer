@@ -93,6 +93,7 @@ await SshServerHost.CreateBuilder()
     .UsePort(2222)
     .AllowAnonymous()
     .UseMaxConnections(100)
+    .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30))
     .UseApplication<MyApp>()
     .Build()
     .RunAsync();
@@ -163,6 +164,7 @@ Fluent builder returned by `SshServerHost.CreateBuilder()`. All configuration me
 | Method | Default | Description |
 |--------|---------|-------------|
 | `UseMaxConnections(int max)` | `100` | Maximum simultaneous SSH connections. `0` = unlimited. |
+| `UseConnectionRateLimit(int count, TimeSpan window)` | disabled | Limit connection attempts per client IP using a sliding window. A non-positive `count` or `window` disables rate limiting. |
 | `UseSessionTimeout(TimeSpan timeout)` | (none) | Idle session timeout. Sessions with no input for this long are disconnected. |
 
 ### Authentication
@@ -223,6 +225,8 @@ Plain configuration POCO. Populated by the builder from code, `appsettings.json`
 | `Banner` | `string` | `"SSH-2.0-SshServer"` | SSH protocol banner. |
 | `HostKeyPath` | `string` | `"hostkey_ecdsa_nistp256.pem"` | Host key PEM file path. |
 | `MaxConnections` | `int` | `100` | Max concurrent connections. `0` = unlimited. |
+| `ConnectionRateLimitCount` | `int` | `0` | Max connection attempts per client IP in the configured rate-limit window. `0` = disabled. |
+| `ConnectionRateLimitWindowSeconds` | `int` | `0` | Sliding rate-limit window in seconds. `0` = disabled. |
 | `LogLevel` | `string` | `"Debug"` | Minimum log level string (`"Trace"`, `"Debug"`, `"Information"`, `"Warning"`, `"Error"`). |
 | `AllowAnonymous` | `bool` | `true` | Whether anonymous connections are accepted. |
 | `AuthorizedKeysPath` | `string?` | `null` | Path to `authorized_keys` file. `null` = public-key auth disabled. |
@@ -613,6 +617,8 @@ When using `UseDefaultConfiguration(args)`, the builder reads from `appsettings.
     "Banner": "SSH-2.0-MyApp",
     "HostKeyPath": "hostkey_ecdsa_nistp256.pem",
     "MaxConnections": 100,
+    "ConnectionRateLimitCount": 10,
+    "ConnectionRateLimitWindowSeconds": 30,
     "LogLevel": "Information",
     "AllowAnonymous": true,
     "AuthorizedKeysPath": "./authorized_keys",
@@ -629,6 +635,8 @@ SSHSERVER_BANNER=SSH-2.0-MyApp
 SSHSERVER_ALLOWANONYMOUS=true
 SSHSERVER_AUTHORIZEDKEYSPATH=/etc/myapp/authorized_keys
 SSHSERVER_MAXCONNECTIONS=100
+SSHSERVER_CONNECTIONRATELIMITCOUNT=10
+SSHSERVER_CONNECTIONRATELIMITWINDOWSECONDS=30
 SSHSERVER_SESSIONTIMEOUTMINUTES=30
 ```
 
@@ -638,9 +646,12 @@ SSHSERVER_SESSIONTIMEOUTMINUTES=30
 --SshServer:Port 2222
 --SshServer:AllowAnonymous false
 --SshServer:MaxConnections 100
+--SshServer:ConnectionRateLimitCount 10
+--SshServer:ConnectionRateLimitWindowSeconds 30
 ```
 
 If the active session count reaches `MaxConnections`, additional connections are rejected with SSH disconnect reason `TooManyConnections`.
+If `ConnectionRateLimitCount` and `ConnectionRateLimitWindowSeconds` are both positive, connection attempts are rate-limited per client IP using a sliding window and excess attempts are rejected with SSH disconnect reason `TooManyConnections`.
 
 ---
 
@@ -973,6 +984,7 @@ public class DualApp : SshShellApplication
 await SshServerHost.CreateBuilder()
     .UseDefaultConfiguration(args)   // reads appsettings.json
     .UseMaxConnections(50)
+    .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30))
     .UseApplication<MyApp>()
     .Build()
     .RunAsync();
@@ -987,6 +999,8 @@ await SshServerHost.CreateBuilder()
     "AuthorizedKeysPath": "authorized_keys",
     "SessionTimeoutMinutes": 60,
     "MaxConnections": 50,
+    "ConnectionRateLimitCount": 10,
+    "ConnectionRateLimitWindowSeconds": 30,
     "LogLevel": "Information"
   }
 }

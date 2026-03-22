@@ -27,8 +27,9 @@ public class Program
         // ── server startup ─────────────────────────────────────────────────────────────
 
         await using var host = SshServerHost.CreateBuilder()
-            .UseDefaultConfiguration(args)
+            .UseDefaultConfiguration(args) // Load appsettings/env/CLI first; explicit calls below override those values.
             .UseMaxConnections(100)
+            .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30))
 
             // Map specific usernames directly to apps (no menu)
             .MapUser<DemoApp>("demo")

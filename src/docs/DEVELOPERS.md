@@ -98,6 +98,7 @@ await SshServerHost.CreateBuilder()
     // Sessions
     .UseSessionTimeout(TimeSpan.FromMinutes(30)) // Idle timeout
     .UseMaxConnections(100)                      // Max concurrent connections
+    .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30)) // Per-IP connection-attempt limit
 
     // Logging
     .UseLogLevel(LogLevel.Information)           // Minimum log level
@@ -412,6 +413,8 @@ Create `appsettings.json`:
     "Banner": "SSH-2.0-MyApp",
     "HostKeyPath": "hostkey.pem",
     "MaxConnections": 100,
+    "ConnectionRateLimitCount": 10,
+    "ConnectionRateLimitWindowSeconds": 30,
     "LogLevel": "Information",
     "AllowAnonymous": false,
     "AuthorizedKeysPath": "./authorized_keys",

@@ -44,6 +44,7 @@ await SshServerHost.CreateBuilder()
     .UsePort(2222)
     .AllowAnonymous()
     .UseMaxConnections(100)
+    .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30))
     .UseApplication<MyApp>()
     .Build()
     .RunAsync();
@@ -83,6 +84,7 @@ await SshServerHost.CreateBuilder()
     .UseAuthorizedKeysFile("authorized_keys")   // Public key auth file
     .UseSessionTimeout(TimeSpan.FromMinutes(30)) // Idle timeout
     .UseMaxConnections(100)                     // Connection limit
+    .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30)) // Per-IP connection-attempt limit
     .UseLogLevel(LogLevel.Information)          // Minimum log level
     .UseApplication<MyApp>()                    // Your application class
     .ConfigureLogging(builder => { ... })       // Custom logging config
@@ -230,6 +232,8 @@ Settings can be configured via `appsettings.json`:
     "Banner": "SSH-2.0-SshServer",
     "HostKeyPath": "hostkey_ecdsa_nistp256.pem",
     "MaxConnections": 100,
+    "ConnectionRateLimitCount": 10,
+    "ConnectionRateLimitWindowSeconds": 30,
     "LogLevel": "Debug",
     "AllowAnonymous": true,
     "AuthorizedKeysPath": "./authorized_keys",
@@ -243,6 +247,7 @@ Load configuration in your app:
 await SshServerHost.CreateBuilder()
     .UseDefaultConfiguration(args)  // Loads appsettings.json + env vars + CLI args
     .UseMaxConnections(100)         // Optional explicit code default
+    .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30))
     .UseApplication<MyApp>()
     .Build()
     .RunAsync();
@@ -254,6 +259,8 @@ await SshServerHost.CreateBuilder()
 | `Banner` | SSH protocol banner |
 | `HostKeyPath` | Path to host key PEM file |
 | `MaxConnections` | Max concurrent connections (0 = unlimited) |
+| `ConnectionRateLimitCount` | Max connection attempts per client IP in the active rate-limit window (0 = disabled) |
+| `ConnectionRateLimitWindowSeconds` | Sliding window length for connection-attempt rate limiting in seconds (0 = disabled) |
 | `LogLevel` | Minimum log level (Trace, Debug, Information, Warning, Error) |
 | `AllowAnonymous` | Allow connections without authentication |
 | `AuthorizedKeysPath` | Path to OpenSSH authorized_keys file |
@@ -262,6 +269,7 @@ await SshServerHost.CreateBuilder()
 Override via environment variables (`SSHSERVER_` prefix) or command-line arguments.
 
 When `MaxConnections` is reached, new SSH sessions are rejected until an existing session closes.
+When `ConnectionRateLimitCount` and `ConnectionRateLimitWindowSeconds` are both positive, connection attempts are rate-limited per client IP using a sliding window.
 
 ## Architecture
 
@@ -297,6 +305,7 @@ When `MaxConnections` is reached, new SSH sessions are rejected until an existin
 - [x] SSH transport (key exchange, encryption, MAC)
 - [x] Anonymous and public key authentication
 - [x] Connection limits
+- [x] Connection-attempt rate limiting
 - [x] PTY requests and window resize
 - [x] Emacs-style line editing with history
 - [x] Tab completion
@@ -312,7 +321,6 @@ When `MaxConnections` is reached, new SSH sessions are rejected until an existin
 
 ### Roadmap
 - [ ] Password authentication
-- [ ] Rate limiting
 - [ ] Unit tests
 
 ## Key RFCs

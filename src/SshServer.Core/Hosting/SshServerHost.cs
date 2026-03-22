@@ -22,6 +22,7 @@ public sealed class SshServerHost : IAsyncDisposable
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger _logger;
     private readonly AuthorizedKeysStore _authorizedKeys;
+    private readonly ConnectionRateLimiter _connectionRateLimiter;
     private readonly ConnectionLimiter _connectionLimiter;
     private readonly CancellationTokenSource _cts = new();
 
@@ -58,6 +59,10 @@ public sealed class SshServerHost : IAsyncDisposable
         });
 
         _logger = _loggerFactory.CreateLogger("SshServer");
+        _connectionRateLimiter = new ConnectionRateLimiter(
+            _options.ConnectionRateLimitCount,
+            TimeSpan.FromSeconds(_options.ConnectionRateLimitWindowSeconds),
+            SystemClock.Instance);
         _connectionLimiter = new ConnectionLimiter(_options.MaxConnections);
 
         // Setup authorized keys
@@ -98,6 +103,14 @@ public sealed class SshServerHost : IAsyncDisposable
         else
         {
             _logger.LogInformation("Public key authentication required ({Count} keys loaded)", _authorizedKeys.Count);
+        }
+
+        if (_connectionRateLimiter.IsEnabled)
+        {
+            _logger.LogInformation(
+                "Connection rate limiting enabled ({Count} attempts per {WindowSeconds} second(s) per client IP)",
+                _connectionRateLimiter.MaxAttempts,
+                (int)_connectionRateLimiter.Window.TotalSeconds);
         }
 
         // Log user mappings
@@ -187,6 +200,23 @@ public sealed class SshServerHost : IAsyncDisposable
 
     private void OnConnectionAccepted(object? sender, Session session)
     {
+        var clientRateLimitKey = GetClientRateLimitKey(session);
+        var rateLimitDecision = _connectionRateLimiter.Evaluate(clientRateLimitKey);
+        if (!rateLimitDecision.IsAllowed)
+        {
+            _logger.LogWarning(
+                "Rejecting connection from {RemoteEndPoint}: rate limit exceeded for {ClientKey} ({Attempts}/{Limit} in {WindowSeconds}s)",
+                session.RemoteEndPoint,
+                rateLimitDecision.ClientKey,
+                rateLimitDecision.AttemptsInWindow,
+                rateLimitDecision.Limit,
+                (int)rateLimitDecision.Window.TotalSeconds);
+            session.Disconnect(
+                DisconnectReason.TooManyConnections,
+                $"Connection rate limit exceeded. Limit is {rateLimitDecision.Limit} attempts per {(int)rateLimitDecision.Window.TotalSeconds} second(s) per client IP.");
+            return;
+        }
+
         if (!_connectionLimiter.TryAcquire(out var activeConnections))
         {
             var limit = _connectionLimiter.MaxConnections;
@@ -405,6 +435,21 @@ public sealed class SshServerHost : IAsyncDisposable
         var port = endpoint?.Port ?? 0;
         var shortGuid = Guid.NewGuid().ToString("N")[..4];
         return $"{ip}:{port}-{shortGuid}";
+    }
+
+    private static string GetClientRateLimitKey(Session session)
+    {
+        var endpoint = session.RemoteEndPoint as IPEndPoint;
+        if (endpoint?.Address is null)
+            return "unknown";
+
+        var address = endpoint.Address;
+        if (address.IsIPv4MappedToIPv6)
+        {
+            address = address.MapToIPv4();
+        }
+
+        return address.ToString();
     }
 
     #endregion

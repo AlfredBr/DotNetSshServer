@@ -175,6 +175,12 @@ public class AdminApp : SshShellApplication
         table.AddRow("Banner", Escape(Options.Banner));
         table.AddRow("Host Key", Escape(Options.HostKeyPath));
         table.AddRow("Max Connections", Options.MaxConnections.ToString());
+        table.AddRow("Connection Rate Limit Count", Options.ConnectionRateLimitCount == 0
+            ? "[dim]Disabled[/]"
+            : Options.ConnectionRateLimitCount.ToString());
+        table.AddRow("Connection Rate Limit Window", Options.ConnectionRateLimitWindowSeconds == 0
+            ? "[dim]Disabled[/]"
+            : $"{Options.ConnectionRateLimitWindowSeconds} sec");
         table.AddRow("Log Level", Options.LogLevel);
         table.AddRow("Allow Anonymous", Options.AllowAnonymous ? "[green]Yes[/]" : "[red]No[/]");
         table.AddRow("Session Timeout", Options.SessionTimeoutMinutes == 0
@@ -258,6 +264,8 @@ public class AdminApp : SshShellApplication
             Port: {Options.Port}
             Banner: {Options.Banner}
             MaxConnections: {Options.MaxConnections}
+            ConnectionRateLimitCount: {Options.ConnectionRateLimitCount}
+            ConnectionRateLimitWindowSeconds: {Options.ConnectionRateLimitWindowSeconds}
             AllowAnonymous: {Options.AllowAnonymous}
             LogLevel: {Options.LogLevel}
 

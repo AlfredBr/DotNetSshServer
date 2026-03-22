@@ -4,12 +4,14 @@
 
 ### Added
 - **Connection limit enforcement** — `UseMaxConnections()` / `MaxConnections` is now enforced by `SshServerHost`, and excess sessions are rejected with SSH disconnect reason `TooManyConnections`.
+- **Connection-attempt rate limiting** — added `UseConnectionRateLimit(int count, TimeSpan window)` plus `ConnectionRateLimitCount` / `ConnectionRateLimitWindowSeconds` configuration. The first implementation uses a per-client-IP sliding window and rejects excess attempts with SSH disconnect reason `TooManyConnections`.
 - **Focused test project** — added `src/AlfredBr.SshServer.Core.Tests` covering connection admission/release behavior and current authentication policy decisions.
 
 ### Changed
 - Updated SDK resolution in `global.json` to allow installed .NET 10 feature bands instead of pinning to an unavailable patch.
 - Clarified API docs to reflect the currently supported connection auth methods (`none`, `publickey`).
 - Updated the demo startup code to show `UseMaxConnections(100)` explicitly alongside the documented configuration path.
+- Updated user docs and demo configuration examples to include the new connection-attempt rate-limit settings.
 
 ---
 

@@ -79,6 +79,19 @@ public class SshServerBuilder
     }
 
     /// <summary>
+    /// Set the per-client-IP connection attempt rate limit.
+    /// A non-positive count or window disables rate limiting.
+    /// </summary>
+    public SshServerBuilder UseConnectionRateLimit(int count, TimeSpan window)
+    {
+        _options.ConnectionRateLimitCount = count;
+        _options.ConnectionRateLimitWindowSeconds = window > TimeSpan.Zero
+            ? (int)Math.Ceiling(window.TotalSeconds)
+            : 0;
+        return this;
+    }
+
+    /// <summary>
     /// Set the minimum log level.
     /// </summary>
     public SshServerBuilder UseLogLevel(LogLevel level)

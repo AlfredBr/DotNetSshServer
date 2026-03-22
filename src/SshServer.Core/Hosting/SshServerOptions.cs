@@ -31,6 +31,18 @@ public class SshServerOptions
     public int MaxConnections { get; set; } = 100;
 
     /// <summary>
+    /// Maximum number of connection attempts allowed per client IP within the configured rate-limit window.
+    /// 0 = disabled. Default: 0.
+    /// </summary>
+    public int ConnectionRateLimitCount { get; set; } = 0;
+
+    /// <summary>
+    /// Sliding window for connection-attempt rate limiting in seconds.
+    /// 0 = disabled. Default: 0.
+    /// </summary>
+    public int ConnectionRateLimitWindowSeconds { get; set; } = 0;
+
+    /// <summary>
     /// Minimum log level. Default: "Debug".
     /// </summary>
     public string LogLevel { get; set; } = "Debug";
