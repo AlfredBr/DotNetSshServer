@@ -420,7 +420,7 @@ Immutable record describing the current SSH session. Accessed via `Connection` i
 |----------|------|-------------|
 | `ConnectionId` | `string` | Unique identifier for this connection in the format `"IP:PORT-GUID"`. Use for logging. |
 | `Username` | `string` | SSH username supplied by the client. May be empty or `"anonymous"` for anonymous auth. |
-| `AuthMethod` | `string` | Authentication method used: `"none"` (anonymous), `"publickey"`, or `"password"`. |
+| `AuthMethod` | `string` | Authentication method used: `"none"` (anonymous) or `"publickey"`. |
 | `KeyFingerprint` | `string?` | SHA-256 fingerprint of the client's public key when `AuthMethod == "publickey"`. `null` otherwise. |
 
 **Example:**

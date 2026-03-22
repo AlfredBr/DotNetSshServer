@@ -1,5 +1,17 @@
 # Release Notes
 
+## 2026-03-22 (24)
+
+### Added
+- **Connection limit enforcement** — `UseMaxConnections()` / `MaxConnections` is now enforced by `SshServerHost`, and excess sessions are rejected with SSH disconnect reason `TooManyConnections`.
+- **Focused test project** — added `src/AlfredBr.SshServer.Core.Tests` covering connection admission/release behavior and current authentication policy decisions.
+
+### Changed
+- Updated SDK resolution in `global.json` to allow installed .NET 10 feature bands instead of pinning to an unavailable patch.
+- Clarified API docs to reflect the currently supported connection auth methods (`none`, `publickey`).
+
+---
+
 ## 2026-02-27 (23)
 
 ### Fixed

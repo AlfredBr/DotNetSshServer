@@ -22,6 +22,7 @@ public sealed class SshServerHost : IAsyncDisposable
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger _logger;
     private readonly AuthorizedKeysStore _authorizedKeys;
+    private readonly ConnectionLimiter _connectionLimiter;
     private readonly CancellationTokenSource _cts = new();
 
     private global::FxSsh.SshServer? _server;
@@ -57,6 +58,7 @@ public sealed class SshServerHost : IAsyncDisposable
         });
 
         _logger = _loggerFactory.CreateLogger("SshServer");
+        _connectionLimiter = new ConnectionLimiter(_options.MaxConnections);
 
         // Setup authorized keys
         _authorizedKeys = new AuthorizedKeysStore(_logger);
@@ -185,12 +187,31 @@ public sealed class SshServerHost : IAsyncDisposable
 
     private void OnConnectionAccepted(object? sender, Session session)
     {
+        if (!_connectionLimiter.TryAcquire(out var activeConnections))
+        {
+            var limit = _connectionLimiter.MaxConnections;
+            _logger.LogWarning(
+                "Rejecting connection from {RemoteEndPoint}: max connections reached ({Active}/{Limit})",
+                session.RemoteEndPoint,
+                activeConnections,
+                limit);
+            session.Disconnect(DisconnectReason.TooManyConnections,
+                $"Too many connections. The server limit is {limit} concurrent connection(s).");
+            return;
+        }
+
         var connId = GenerateConnectionId(session);
         var connInfo = new MutableConnectionInfo(connId);
         _logger.LogInformation("[{ConnId}] Connection accepted", connId);
 
         session.ServiceRegistered += (_, service) => OnServiceRegistered(service, connId, connInfo);
-        session.Disconnected += (_, _) => _logger.LogInformation("[{ConnId}] Disconnected", connId);
+        session.Disconnected += (_, _) =>
+        {
+            var remainingConnections = _connectionLimiter.Release();
+            _logger.LogInformation("[{ConnId}] Disconnected ({ActiveConnections} active connection(s) remain)",
+                connId,
+                remainingConnections);
+        };
     }
 
     private void OnServiceRegistered(SshService service, string connId, MutableConnectionInfo connInfo)
@@ -200,45 +221,49 @@ public sealed class SshServerHost : IAsyncDisposable
         {
             authService.UserAuth += (_, args) =>
             {
+                var evaluation = AuthenticationEvaluator.Evaluate(args, _options.AllowAnonymous, _authorizedKeys);
+
                 switch (args.AuthMethod)
                 {
                     case "none":
-                        // Anonymous access
-                        if (_options.AllowAnonymous)
+                        if (evaluation.IsAccepted)
                         {
                             _logger.LogInformation("[{ConnId}] Anonymous auth accepted for user '{User}'", connId, args.Username);
-                            args.Result = true;
-                            connInfo.SetAuth(args.Username, "none", null);
                         }
                         else
                         {
                             _logger.LogDebug("[{ConnId}] Anonymous auth rejected for user '{User}'", connId, args.Username);
-                            args.Result = false;
                         }
                         break;
 
                     case "publickey":
-                        // Public key authentication
-                        if (args.Key != null && _authorizedKeys.IsAuthorized(args.KeyAlgorithm!, args.Key))
+                        if (evaluation.IsAccepted)
                         {
                             _logger.LogInformation("[{ConnId}] Public key auth accepted for user '{User}' ({KeyType})",
                                 connId, args.Username, args.KeyAlgorithm);
-                            args.Result = true;
-                            connInfo.SetAuth(args.Username, "publickey", args.Fingerprint);
                         }
                         else
                         {
                             _logger.LogDebug("[{ConnId}] Public key auth rejected for user '{User}' ({KeyType}, fingerprint: {Fingerprint})",
                                 connId, args.Username, args.KeyAlgorithm, args.Fingerprint);
-                            args.Result = false;
                         }
+                        break;
+
+                    case "password":
+                        _logger.LogDebug("[{ConnId}] Password auth rejected for user '{User}'",
+                            connId, args.Username);
                         break;
 
                     default:
                         _logger.LogDebug("[{ConnId}] Unsupported auth method '{Method}' for user '{User}'",
                             connId, args.AuthMethod, args.Username);
-                        args.Result = false;
                         break;
+                }
+
+                args.Result = evaluation.IsAccepted;
+                if (evaluation.IsAccepted)
+                {
+                    connInfo.SetAuth(args.Username, evaluation.ConnectionAuthMethod, evaluation.KeyFingerprint);
                 }
             };
             return;

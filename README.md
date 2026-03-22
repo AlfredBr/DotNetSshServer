@@ -292,6 +292,7 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 ### Completed
 - [x] SSH transport (key exchange, encryption, MAC)
 - [x] Anonymous and public key authentication
+- [x] Connection limits
 - [x] PTY requests and window resize
 - [x] Emacs-style line editing with history
 - [x] Tab completion
@@ -307,7 +308,7 @@ Override via environment variables (`SSHSERVER_` prefix) or command-line argumen
 
 ### Roadmap
 - [ ] Password authentication
-- [ ] Rate limiting / connection limits
+- [ ] Rate limiting
 - [ ] Unit tests
 
 ## Key RFCs
