@@ -28,6 +28,7 @@ public class Program
 
         await using var host = SshServerHost.CreateBuilder()
             .UseDefaultConfiguration(args)
+            .UseMaxConnections(100)
 
             // Map specific usernames directly to apps (no menu)
             .MapUser<DemoApp>("demo")

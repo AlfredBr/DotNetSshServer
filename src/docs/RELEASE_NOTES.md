@@ -9,6 +9,7 @@
 ### Changed
 - Updated SDK resolution in `global.json` to allow installed .NET 10 feature bands instead of pinning to an unavailable patch.
 - Clarified API docs to reflect the currently supported connection auth methods (`none`, `publickey`).
+- Updated the demo startup code to show `UseMaxConnections(100)` explicitly alongside the documented configuration path.
 
 ---
 

@@ -92,6 +92,7 @@ public class MyApp : SshShellApplication
 await SshServerHost.CreateBuilder()
     .UsePort(2222)
     .AllowAnonymous()
+    .UseMaxConnections(100)
     .UseApplication<MyApp>()
     .Build()
     .RunAsync();
@@ -627,6 +628,7 @@ SSHSERVER_PORT=2222
 SSHSERVER_BANNER=SSH-2.0-MyApp
 SSHSERVER_ALLOWANONYMOUS=true
 SSHSERVER_AUTHORIZEDKEYSPATH=/etc/myapp/authorized_keys
+SSHSERVER_MAXCONNECTIONS=100
 SSHSERVER_SESSIONTIMEOUTMINUTES=30
 ```
 
@@ -635,7 +637,10 @@ SSHSERVER_SESSIONTIMEOUTMINUTES=30
 ```
 --SshServer:Port 2222
 --SshServer:AllowAnonymous false
+--SshServer:MaxConnections 100
 ```
+
+If the active session count reaches `MaxConnections`, additional connections are rejected with SSH disconnect reason `TooManyConnections`.
 
 ---
 
@@ -967,6 +972,7 @@ public class DualApp : SshShellApplication
 // Program.cs
 await SshServerHost.CreateBuilder()
     .UseDefaultConfiguration(args)   // reads appsettings.json
+    .UseMaxConnections(50)
     .UseApplication<MyApp>()
     .Build()
     .RunAsync();

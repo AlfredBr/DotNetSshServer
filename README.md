@@ -43,6 +43,7 @@ public class MyApp : SshShellApplication
 await SshServerHost.CreateBuilder()
     .UsePort(2222)
     .AllowAnonymous()
+    .UseMaxConnections(100)
     .UseApplication<MyApp>()
     .Build()
     .RunAsync();
@@ -241,6 +242,7 @@ Load configuration in your app:
 ```csharp
 await SshServerHost.CreateBuilder()
     .UseDefaultConfiguration(args)  // Loads appsettings.json + env vars + CLI args
+    .UseMaxConnections(100)         // Optional explicit code default
     .UseApplication<MyApp>()
     .Build()
     .RunAsync();
@@ -258,6 +260,8 @@ await SshServerHost.CreateBuilder()
 | `SessionTimeoutMinutes` | Idle timeout in minutes (0 = disabled) |
 
 Override via environment variables (`SSHSERVER_` prefix) or command-line arguments.
+
+When `MaxConnections` is reached, new SSH sessions are rejected until an existing session closes.
 
 ## Architecture
 
