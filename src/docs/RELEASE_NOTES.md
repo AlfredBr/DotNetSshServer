@@ -1,6 +1,6 @@
 # Release Notes
 
-## Unreleased
+## 2026-05-28 (25)
 
 ### Added
 - **Transport operation timeout configuration** — added `UseTransportOperationTimeout()` / `TransportOperationTimeoutSeconds` for active SSH protocol operations.
