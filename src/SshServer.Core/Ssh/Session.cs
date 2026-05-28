@@ -29,14 +29,15 @@ namespace FxSsh
         internal static readonly Dictionary<string, Func<CipherInfo>> _encryptionAlgorithms = [];
         internal static readonly Dictionary<string, Func<HmacInfo>> _hmacAlgorithms = [];
         internal static readonly Dictionary<string, Func<CompressionAlgorithm>> _compressionAlgorithms = [];
+#if DEBUG
+        internal static readonly TimeSpan DefaultTransportOperationTimeout = TimeSpan.FromDays(1);
+#else
+        internal static readonly TimeSpan DefaultTransportOperationTimeout = TimeSpan.FromSeconds(30);
+#endif
 
         private readonly object _locker = new();
         private readonly Socket _socket = null!;
-#if DEBUG
-        private readonly TimeSpan _timeout = TimeSpan.FromDays(1);
-#else
-        private readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
-#endif
+        private readonly TimeSpan _transportOperationTimeout;
         private readonly Dictionary<string, string> _hostKey;
 
         private uint _outboundPacketSequence;
@@ -45,6 +46,7 @@ namespace FxSsh
         private uint _inboundFlow;
         private Algorithms? _algorithms = null;
         private ExchangeContext? _exchangeContext = null;
+        private bool _initialKeyExchangeCompleted;
         private List<SshService> _services = [];
         private ConcurrentQueue<Message> _blockedMessages = new();
         private EventWaitHandle _hasBlockedMessagesWaitHandle = new ManualResetEvent(true);
@@ -91,13 +93,21 @@ namespace FxSsh
         }
 
         public Session(Socket socket, Dictionary<string, string> hostKey, string serverBanner)
+            : this(socket, hostKey, serverBanner, DefaultTransportOperationTimeout)
+        {
+        }
+
+        internal Session(Socket socket, Dictionary<string, string> hostKey, string serverBanner, TimeSpan transportOperationTimeout)
         {
             Contract.Requires(socket != null);
             Contract.Requires(hostKey != null);
+            if (transportOperationTimeout <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(transportOperationTimeout), "Transport operation timeout must be greater than zero.");
 
             _socket = socket!;
             _hostKey = hostKey!.ToDictionary(s => s.Key, s => s.Value);
             ServerVersion = serverBanner;
+            _transportOperationTimeout = transportOperationTimeout;
         }
 
         public event EventHandler<EventArgs>? Disconnected;
@@ -173,7 +183,9 @@ namespace FxSsh
             _socket.LingerState = new LingerOption(enable: false, seconds: 0);
             _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, socketBufferSize);
             _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, socketBufferSize);
-            _socket.ReceiveTimeout = (int)_timeout.TotalMilliseconds;
+            var socketTimeout = ToSocketTimeoutMilliseconds(_transportOperationTimeout);
+            _socket.ReceiveTimeout = socketTimeout;
+            _socket.SendTimeout = socketTimeout;
         }
 
         private string SocketReadProtocolVersion()
@@ -187,7 +199,7 @@ namespace FxSsh
             while (pos < buffer.Length)
             {
                 var ar = _socket.BeginReceive(buffer, pos, buffer.Length - pos, SocketFlags.Peek, null, null);
-                WaitHandle(ar);
+                WaitHandle(ar, _transportOperationTimeout);
                 len = _socket.EndReceive(ar);
 
                 if (len == 0)
@@ -218,38 +230,29 @@ namespace FxSsh
             SocketWrite(Encoding.ASCII.GetBytes(ServerVersion + "\r\n"));
         }
 
-        private byte[] SocketRead(int length)
+        internal byte[] SocketRead(int length, bool waitForInitialDataIndefinitely = false)
         {
             var pos = 0;
             var buffer = new byte[length];
-
-            var msSinceLastData = 0;
 
             while (pos < length)
             {
                 try
                 {
                     var ar = _socket.BeginReceive(buffer, pos, length - pos, SocketFlags.None, null, null);
-                    WaitHandle(ar);
+                    var timeout = waitForInitialDataIndefinitely && pos == 0
+                        ? (TimeSpan?)null
+                        : _transportOperationTimeout;
+                    WaitHandle(ar, timeout);
                     var len = _socket.EndReceive(ar);
                     if (!_socket.Connected)
                     {
                         throw new SshConnectionException("Connection lost", DisconnectReason.ConnectionLost);
                     }
 
-                    if (len == 0 && _socket.Available == 0)
+                    if (len == 0)
                     {
-                        if (msSinceLastData >= _timeout.TotalMilliseconds)
-                        {
-                            throw new SshConnectionException("Connection lost", DisconnectReason.ConnectionLost);
-                        }
-
-                        msSinceLastData += 50;
-                        Thread.Sleep(50);
-                    }
-                    else
-                    {
-                        msSinceLastData = 0;
+                        throw new SshConnectionException("Connection lost", DisconnectReason.ConnectionLost);
                     }
 
                     pos += len;
@@ -280,7 +283,7 @@ namespace FxSsh
                 try
                 {
                     var ar = _socket.BeginSend(data, pos, length - pos, SocketFlags.None, null, null);
-                    WaitHandle(ar);
+                    WaitHandle(ar, _transportOperationTimeout);
                     pos += _socket.EndSend(ar);
                 }
                 catch (SocketException ex)
@@ -297,12 +300,24 @@ namespace FxSsh
             }
         }
 
-        private void WaitHandle(IAsyncResult ar)
+        private void WaitHandle(IAsyncResult ar, TimeSpan? timeout)
         {
-            if (!ar.AsyncWaitHandle.WaitOne(_timeout))
+            if (timeout == null)
+            {
+                ar.AsyncWaitHandle.WaitOne();
+                return;
+            }
+
+            if (!ar.AsyncWaitHandle.WaitOne(timeout.Value))
                 throw new SshConnectionException(string.Format("Socket operation has timed out after {0:F0} milliseconds.",
-                    _timeout.TotalMilliseconds),
+                    timeout.Value.TotalMilliseconds),
                     DisconnectReason.ConnectionLost);
+        }
+
+        private static int ToSocketTimeoutMilliseconds(TimeSpan timeout)
+        {
+            var milliseconds = Math.Ceiling(timeout.TotalMilliseconds);
+            return (int)Math.Min(int.MaxValue, Math.Max(1, milliseconds));
         }
         #endregion
 
@@ -312,7 +327,7 @@ namespace FxSsh
             var useAlg = _algorithms != null;
 
             var blockSize = (byte)(useAlg ? Math.Max(8, _algorithms!.ClientEncryption.BlockBytesSize) : 8);
-            var firstBlock = SocketRead(blockSize);
+            var firstBlock = SocketRead(blockSize, ShouldWaitIndefinitelyForNextPacket());
             if (useAlg)
                 firstBlock = _algorithms!.ClientEncryption.Transform(firstBlock);
 
@@ -356,6 +371,12 @@ namespace FxSsh
             ConsiderReExchange();
 
             return message;
+        }
+
+        private bool ShouldWaitIndefinitelyForNextPacket()
+        {
+            lock (_locker)
+                return _initialKeyExchangeCompleted && _exchangeContext == null;
         }
 
         internal void SendMessage(Message message)
@@ -623,6 +644,7 @@ namespace FxSsh
                 _outboundFlow = 0;
                 _algorithms = _exchangeContext!.NewAlgorithms;
                 _exchangeContext = null;
+                _initialKeyExchangeCompleted = true;
             }
 
             ContinueSendBlockedMessages();

@@ -83,6 +83,7 @@ await SshServerHost.CreateBuilder()
     .AllowAnonymous()                           // Enable anonymous auth
     .UseAuthorizedKeysFile("authorized_keys")   // Public key auth file
     .UseSessionTimeout(TimeSpan.FromMinutes(30)) // Idle timeout
+    .UseTransportOperationTimeout(TimeSpan.FromSeconds(30)) // Active SSH transport timeout
     .UseMaxConnections(100)                     // Connection limit
     .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30)) // Per-IP connection-attempt limit
     .UseLogLevel(LogLevel.Information)          // Minimum log level
@@ -237,7 +238,8 @@ Settings can be configured via `appsettings.json`:
     "LogLevel": "Debug",
     "AllowAnonymous": true,
     "AuthorizedKeysPath": "./authorized_keys",
-    "SessionTimeoutMinutes": 0
+    "SessionTimeoutMinutes": 0,
+    "TransportOperationTimeoutSeconds": 30
   }
 }
 ```
@@ -265,6 +267,7 @@ await SshServerHost.CreateBuilder()
 | `AllowAnonymous` | Allow connections without authentication |
 | `AuthorizedKeysPath` | Path to OpenSSH authorized_keys file |
 | `SessionTimeoutMinutes` | Idle timeout in minutes (0 = disabled) |
+| `TransportOperationTimeoutSeconds` | Timeout for active SSH transport operations; idle established sessions use `SessionTimeoutMinutes` |
 
 Override via environment variables (`SSHSERVER_` prefix) or command-line arguments.
 

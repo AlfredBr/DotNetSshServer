@@ -166,6 +166,7 @@ Fluent builder returned by `SshServerHost.CreateBuilder()`. All configuration me
 | `UseMaxConnections(int max)` | `100` | Maximum simultaneous SSH connections. `0` = unlimited. |
 | `UseConnectionRateLimit(int count, TimeSpan window)` | disabled | Limit connection attempts per client IP using a sliding window. A non-positive `count` or `window` disables rate limiting. |
 | `UseSessionTimeout(TimeSpan timeout)` | (none) | Idle session timeout. Sessions with no input for this long are disconnected. |
+| `UseTransportOperationTimeout(TimeSpan timeout)` | `30s` | Timeout for active SSH transport operations such as startup, writes, rekeying, and partial packet reads. Idle established sessions are controlled by `UseSessionTimeout()`. |
 
 ### Authentication
 
@@ -231,6 +232,7 @@ Plain configuration POCO. Populated by the builder from code, `appsettings.json`
 | `AllowAnonymous` | `bool` | `true` | Whether anonymous connections are accepted. |
 | `AuthorizedKeysPath` | `string?` | `null` | Path to `authorized_keys` file. `null` = public-key auth disabled. |
 | `SessionTimeoutMinutes` | `int` | `0` | Idle timeout in minutes. `0` = disabled. |
+| `TransportOperationTimeoutSeconds` | `int` | `30` | Timeout for active SSH transport operations. Must be greater than `0`. |
 
 **Configuration section name:** `"SshServer"` (`SshServerOptions.SectionName`)
 
@@ -622,7 +624,8 @@ When using `UseDefaultConfiguration(args)`, the builder reads from `appsettings.
     "LogLevel": "Information",
     "AllowAnonymous": true,
     "AuthorizedKeysPath": "./authorized_keys",
-    "SessionTimeoutMinutes": 30
+    "SessionTimeoutMinutes": 30,
+    "TransportOperationTimeoutSeconds": 30
   }
 }
 ```
@@ -638,6 +641,7 @@ SSHSERVER_MAXCONNECTIONS=100
 SSHSERVER_CONNECTIONRATELIMITCOUNT=10
 SSHSERVER_CONNECTIONRATELIMITWINDOWSECONDS=30
 SSHSERVER_SESSIONTIMEOUTMINUTES=30
+SSHSERVER_TRANSPORTOPERATIONTIMEOUTSECONDS=30
 ```
 
 **Command-line argument equivalents:**
@@ -998,6 +1002,7 @@ await SshServerHost.CreateBuilder()
     "AllowAnonymous": false,
     "AuthorizedKeysPath": "authorized_keys",
     "SessionTimeoutMinutes": 60,
+    "TransportOperationTimeoutSeconds": 30,
     "MaxConnections": 50,
     "ConnectionRateLimitCount": 10,
     "ConnectionRateLimitWindowSeconds": 30,

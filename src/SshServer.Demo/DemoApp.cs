@@ -73,6 +73,7 @@ public class DemoApp : SshShellApplication
         sb.AppendLine($"ConnectionRateLimitWindowSeconds: {Options.ConnectionRateLimitWindowSeconds}");
         sb.AppendLine($"AllowAnonymous: {Options.AllowAnonymous}");
         sb.AppendLine($"SessionTimeoutMinutes: {Options.SessionTimeoutMinutes}");
+        sb.AppendLine($"TransportOperationTimeoutSeconds: {Options.TransportOperationTimeoutSeconds}");
         return sb.ToString();
     }
 
@@ -298,6 +299,7 @@ public class DemoApp : SshShellApplication
         table.AddRow("SessionTimeoutMinutes", Options.SessionTimeoutMinutes == 0
             ? "[dim]disabled[/]"
             : $"{Options.SessionTimeoutMinutes} min");
+        table.AddRow("TransportOperationTimeoutSeconds", $"{Options.TransportOperationTimeoutSeconds} sec");
 
         Write(table);
     }

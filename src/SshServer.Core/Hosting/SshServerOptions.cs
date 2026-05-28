@@ -64,4 +64,11 @@ public class SshServerOptions
     /// Sessions with no activity for this duration will be disconnected.
     /// </summary>
     public int SessionTimeoutMinutes { get; set; } = 0;
+
+    /// <summary>
+    /// Timeout for active SSH transport operations in seconds. Default: 30.
+    /// This applies to protocol startup, writes, rekeying, and partial packet reads;
+    /// idle established sessions are controlled by SessionTimeoutMinutes instead.
+    /// </summary>
+    public int TransportOperationTimeoutSeconds { get; set; } = 30;
 }

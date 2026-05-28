@@ -1,5 +1,15 @@
 # Release Notes
 
+## Unreleased
+
+### Added
+- **Transport operation timeout configuration** — added `UseTransportOperationTimeout()` / `TransportOperationTimeoutSeconds` for active SSH protocol operations.
+
+### Fixed
+- **Idle SSH sessions** — established sessions no longer disconnect just because the client is idle at a prompt. The transport timeout still applies to startup, writes, rekeying, and partial packet reads.
+
+---
+
 ## 2026-03-22 (24)
 
 ### Added

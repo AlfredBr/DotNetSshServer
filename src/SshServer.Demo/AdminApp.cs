@@ -186,6 +186,7 @@ public class AdminApp : SshShellApplication
         table.AddRow("Session Timeout", Options.SessionTimeoutMinutes == 0
             ? "[dim]Disabled[/]"
             : $"{Options.SessionTimeoutMinutes} min");
+        table.AddRow("Transport Operation Timeout", $"{Options.TransportOperationTimeoutSeconds} sec");
 
         Write(table);
     }

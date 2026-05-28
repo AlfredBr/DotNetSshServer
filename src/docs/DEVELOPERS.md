@@ -97,6 +97,7 @@ await SshServerHost.CreateBuilder()
 
     // Sessions
     .UseSessionTimeout(TimeSpan.FromMinutes(30)) // Idle timeout
+    .UseTransportOperationTimeout(TimeSpan.FromSeconds(30)) // Active transport operations
     .UseMaxConnections(100)                      // Max concurrent connections
     .UseConnectionRateLimit(10, TimeSpan.FromSeconds(30)) // Per-IP connection-attempt limit
 
@@ -418,7 +419,8 @@ Create `appsettings.json`:
     "LogLevel": "Information",
     "AllowAnonymous": false,
     "AuthorizedKeysPath": "./authorized_keys",
-    "SessionTimeoutMinutes": 30
+    "SessionTimeoutMinutes": 30,
+    "TransportOperationTimeoutSeconds": 30
   }
 }
 ```
@@ -517,6 +519,8 @@ The base class handles input routing automatically. If you're using raw `Console
 ### Session Timeout
 
 Set `SessionTimeoutMinutes: 0` to disable, or increase the value for longer sessions.
+
+`TransportOperationTimeoutSeconds` is separate: it protects active SSH protocol operations such as startup, writes, rekeying, and partial packet reads. It does not disconnect an established session simply because the user is idle at a prompt.
 
 ## License
 

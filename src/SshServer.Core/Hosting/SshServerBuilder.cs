@@ -70,6 +70,19 @@ public class SshServerBuilder
     }
 
     /// <summary>
+    /// Set the timeout for active SSH transport operations.
+    /// Idle established sessions are controlled by UseSessionTimeout().
+    /// </summary>
+    public SshServerBuilder UseTransportOperationTimeout(TimeSpan timeout)
+    {
+        if (timeout <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(timeout), "Transport operation timeout must be greater than zero.");
+
+        _options.TransportOperationTimeoutSeconds = (int)Math.Ceiling(timeout.TotalSeconds);
+        return this;
+    }
+
+    /// <summary>
     /// Set the maximum number of concurrent connections.
     /// </summary>
     public SshServerBuilder UseMaxConnections(int maxConnections)

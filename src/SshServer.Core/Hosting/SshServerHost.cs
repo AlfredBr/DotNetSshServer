@@ -126,7 +126,17 @@ public sealed class SshServerHost : IAsyncDisposable
         }
 
         // Create and start server
-        _server = new global::FxSsh.SshServer(new StartingInfo(IPAddress.IPv6Any, _options.Port, _options.Banner));
+        if (_options.TransportOperationTimeoutSeconds <= 0)
+        {
+            throw new InvalidOperationException(
+                $"{SshServerOptions.SectionName}:{nameof(SshServerOptions.TransportOperationTimeoutSeconds)} must be greater than zero.");
+        }
+
+        _server = new global::FxSsh.SshServer(new StartingInfo(
+            IPAddress.IPv6Any,
+            _options.Port,
+            _options.Banner,
+            TimeSpan.FromSeconds(_options.TransportOperationTimeoutSeconds)));
         HostKeyStore.EnsureAndRegister(_server, _options.HostKeyPath);
 
         _server.ConnectionAccepted += OnConnectionAccepted;
