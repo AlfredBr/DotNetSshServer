@@ -12,7 +12,7 @@
   <!-- NuGet Package Metadata -->
   <PropertyGroup>
     <PackageId>AlfredBr.SshServer.Core</PackageId>
-    <Version>1.3.0</Version>
+    <Version>1.3.1</Version>
     <Description>SSH server library for building TUI applications over SSH. Includes Spectre.Console integration, emacs-style line editing, and a fluent builder API.</Description>
     <Authors>alfredbr</Authors>
     <PackageTags>ssh;server;tui;terminal;spectre;console</PackageTags>
@@ -36,7 +36,11 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.3" />
     <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
-    <PackageReference Include="Spectre.Console" Version="0.49.1" />
+    <!-- Spectre.Console 0.50+ is strong-name signed; consumers on newer Spectre
+         versions cannot bind to a library compiled against the unsigned 0.49.x
+         assembly (CS0012). Keep this at or above the signed releases. The CI
+         workflow also builds against the latest 0.x to catch future drift. -->
+    <PackageReference Include="Spectre.Console" Version="$(SpectreConsoleVersion)" />
   </ItemGroup>
 
   <ItemGroup>

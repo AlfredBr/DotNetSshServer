@@ -37,3 +37,21 @@ jobs:
         with:
           name: nuget-packages
           path: artifacts/nuget/*
+
+  spectre-compat:
+    name: Build against latest Spectre.Console
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Catches breaking API / assembly-identity changes in newer Spectre.Console
+      # releases before consumers hit them (see 1.3.1 release notes).
+      - name: Build with floating Spectre.Console version
+        run: dotnet build src/SshServer.Core/SshServer.Core.csproj -c Release -p:SpectreConsoleVersion="0.*"

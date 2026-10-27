@@ -302,6 +302,8 @@ When `ConnectionRateLimitCount` and `ConnectionRateLimitWindowSeconds` are both 
 | [Spectre.Console](https://github.com/spectreconsole/spectre.console) | TUI rendering and prompts |
 | [NSec.Cryptography](https://github.com/ektrah/nsec) | Ed25519 key support |
 
+> **Spectre.Console version:** 1.3.1+ requires Spectre.Console 0.57.2 or later (the strong-name-signed releases). If your app also references Spectre.Console directly, use 0.57.2 or newer; mixing it with SshServer.Core 1.3.0 (built on unsigned 0.49.1) causes `CS0012` errors for `IRenderable` / `IAnsiConsole`.
+
 ## Project Status
 
 ### Completed

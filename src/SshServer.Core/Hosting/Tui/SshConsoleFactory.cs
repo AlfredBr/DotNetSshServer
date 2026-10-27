@@ -68,4 +68,5 @@ internal class SshAnsiConsoleWrapper : IAnsiConsole
 
     public void Clear(bool home) => _inner.Clear(home);
     public void Write(IRenderable renderable) => _inner.Write(renderable);
+    public void WriteAnsi(Action<AnsiWriter> action) => _inner.WriteAnsi(action);
 }

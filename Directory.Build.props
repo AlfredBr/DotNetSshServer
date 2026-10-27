@@ -11,6 +11,11 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- Override with -p:SpectreConsoleVersion=... to test compatibility. -->
+    <SpectreConsoleVersion Condition="'$(SpectreConsoleVersion)' == ''">0.57.2</SpectreConsoleVersion>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(IsPackable)' != 'false'">
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -18,7 +23,4 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(IsPackable)' != 'false'">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-  </ItemGroup>
 </Project>

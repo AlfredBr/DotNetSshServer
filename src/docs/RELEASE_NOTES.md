@@ -1,5 +1,20 @@
 # Release Notes
 
+## 2026-10-27 (26) — v1.3.1
+
+### Fixed
+- **CS0012 / CS1503 in consumers using newer Spectre.Console** — 1.3.0 was compiled against Spectre.Console 0.49.1, which is *unsigned*. Spectre.Console 0.50+ is strong-name signed, so a consuming app referencing e.g. 0.57.2 resolved a different assembly identity and could not see `IRenderable` / `IAnsiConsole` in this library's API (`Write(IRenderable)` overloads failed for `Panel`, `Table`, `Rule`). The library now references Spectre.Console 0.57.2.
+
+- **Spectre.Console 0.57 API** — `SshAnsiConsoleWrapper` now implements the new `IAnsiConsole.WriteAnsi(Action<AnsiWriter>)` member (forwarded to the inner console), fixing `CS0535` after the upgrade.
+
+### Changed
+- Spectre.Console version is centralized as the `SpectreConsoleVersion` MSBuild property in `Directory.Build.props` (overridable with `-p:SpectreConsoleVersion=...`).
+- Added a `spectre-compat` CI job to `pack-validation.yml` that builds the library against the latest Spectre.Console 0.x, so future breaking/identity changes are caught before release.
+- Removed the `Microsoft.SourceLink.GitHub` 8.0.0 package reference. Source Link is built into the .NET 8+ SDK, and the package pulled in `Microsoft.Build.Tasks.Git` 8.0.0, which has a known vulnerability (NU1902, GHSA-23fw-v26w-5fgq).
+- Package version bumped to 1.3.1.
+
+---
+
 ## 2026-05-28 (25)
 
 ### Added
